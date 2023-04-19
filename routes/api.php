@@ -36,11 +36,14 @@ Route::get('category/{id}', [CategoryController::class, 'viewIdCategory']);
 Route::get('products', [ProductController::class, 'viewProduct']);
 Route::post('products', [ProductController::class, 'addProduct']);
 Route::post('products/{id}', [ProductController::class, 'updateProduct']);
-Route::post('detail-products/{id}', [ProductController::class, 'addDetailProduct']);
 Route::delete('detail-products/{id}', [ProductController::class, 'deleteDetailProduct']);
 Route::delete('products/{id}', [ProductController::class, 'deleteProduct']);
+
 Route::get('detail-products/{id}', [ProductController::class, 'getDetail']);
+Route::post('detail-products/{id}', [ProductController::class, 'addDetailProduct']);
 Route::delete('detail-products/{id}', [ProductController::class, 'deleteDetailProduct']);
+Route::post('update-detail-products/{id}', [ProductController::class, 'editDetailProduct']);
+
 Route::get('fetchProduct/{slug}', [ProductController::class, 'fetchProduct']);
 Route::get('fetchProduct/{slug}/{product}', [ProductController::class, 'fetchDetailProduct']);
 Route::get('detailProduct/{id}', [ProductController::class, 'getDetailItem']);

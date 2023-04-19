@@ -37,7 +37,7 @@ class CategoryController extends Controller
             'name' => 'required|max:191',
             'slug' => 'required|max:191',
             'photo' => 'required',
-            'photo.*' => 'required|max:2048|image|mimes:jpg,png,jpeg',
+            'photo' => 'required|max:2048|image|mimes:jpg,png,jpeg',
         ]);
 
         if ($validator->fails()) {

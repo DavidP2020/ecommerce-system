@@ -20,7 +20,9 @@ return new class extends Migration
             $table->unsignedBigInteger('brand_id')->nullable();
             $table->foreign('brand_id')->references('id')->on('brand')->cascadeOnDelete('cascade');
             $table->string("photo")->nullable();
-            $table->string("description", 255)->nullable();
+            $table->integer('weight')->nullable();
+            $table->string("description", 5000)->nullable();
+            $table->boolean("trending")->default(0);
             $table->tinyInteger("status")->default(1);
             $table->timestamps();
         });

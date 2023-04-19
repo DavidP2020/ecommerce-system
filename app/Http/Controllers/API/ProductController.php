@@ -41,7 +41,7 @@ class ProductController extends Controller
             'name' => 'required|max:191',
             'slug' => 'required|max:191',
             'photo' => 'required',
-            'photo.*' => 'required|max:2048|image|mimes:jpg,png,jpeg',
+            'photo' => 'required|max:2048|image|mimes:jpg,png,jpeg',
         ]);
 
         if ($validator->fails()) {
@@ -54,6 +54,8 @@ class ProductController extends Controller
             $product->category_id = $req->input('category_id');
             $product->name = $req->input('name');
             $product->slug = $req->input('slug');
+            $product->trending = $req->input('trending');
+            $product->weight = $req->input('weight');
             $product->description = $req->input('description');
             $product->brand_id = $req->input('brand_id');
 
@@ -67,7 +69,7 @@ class ProductController extends Controller
                 $product->photo = 'uploads/products/' . $fileName;
             }
 
-            $product->status = $req->input('status') == true ? '1' : '0';
+            $product->status = $req->input('status');
 
             $product->save();
 
@@ -94,21 +96,55 @@ class ProductController extends Controller
             if ($detailProduct) {
                 if ($req->input('color_id')) {
                     if ($detailProduct->colors()->where('color_id', $req->input('color_id'))->get()->isEmpty()) {
-                        $detailProduct->colors()->attach($req->input('color_id'), ['weight' => $req->weight, 'qty' => $req->qty, 'original_price' => $req->original_price, 'price' => $req->price, 'status' => $req->status]);
-
+                        $detailProduct->colors()->attach($req->input('color_id'), ['qty' => $req->qty, 'original_price' => $req->original_price, 'price' => $req->price, 'status' => $req->status]);
                         $detailProduct->save();
                         return response()->json([
                             'status' => 200,
                             'message' => "Detail Products Added Successfully",
                         ]);
                     } else {
-                        $detailProduct->colors()->updateExistingPivot($req->input('color_id'), ['weight' => $req->weight, 'qty' => $req->qty, 'original_price' => $req->original_price, 'price' => $req->price, 'status' => $req->status]);
+                        $detailProduct->colors()->updateExistingPivot($req->input('color_id'), ['qty' => $req->qty, 'original_price' => $req->original_price, 'price' => $req->price, 'status' => $req->status]);
                         return response()->json([
                             'status' => 200,
                             'message' => "Detail Products Updated Successfully",
                         ]);
                     }
                 }
+            } else {
+                return response()->json([
+                    'status' => 404,
+                    'message' => "Detail Products ID Not Found",
+                ]);
+            }
+        }
+    }
+
+    public function editDetailProduct(Request $req, $id)
+    {
+        $validator = Validator::make($req->all(), [
+            'color_id' => 'required|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 403,
+                'validation_errors' => $validator->messages(),
+            ]);
+        } else {
+            $detailProduct = Product_Color::find($id);
+            if ($detailProduct) {
+                $detailProduct->product_id = $req->input('product_id');
+                $detailProduct->color_id = $req->input('color_id');
+                $detailProduct->qty = $req->input('qty');
+                $detailProduct->original_price = $req->input('original_price');
+                $detailProduct->price = $req->input('price');
+                $detailProduct->status = $req->input('status') == true ? '1' : '0';
+
+                $detailProduct->update();
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Detail Products Updated Successfully",
+                ]);
             } else {
                 return response()->json([
                     'status' => 404,
@@ -138,8 +174,10 @@ class ProductController extends Controller
                 $product->category_id = $req->input('category_id');
                 $product->name = $req->input('name');
                 $product->slug = $req->input('slug');
+                $product->trending = $req->input('trending');
                 $product->brand_id = $req->input('brand_id');
                 $product->description = $req->input('description');
+                $product->weight = $req->input('weight');
 
                 if ($req->hasFile('photo')) {
                     $path = $product->photo;
@@ -154,7 +192,7 @@ class ProductController extends Controller
                     $product->photo = 'uploads/products/' . $fileName;
                 }
 
-                $product->status = $req->input('status') == true ? '1' : '0';
+                $product->status = $req->input('status');
 
                 $product->update();
 
@@ -211,13 +249,14 @@ class ProductController extends Controller
     {
         $category = Category::where('slug', $slug)->where('status', '1')->first();
         if ($category) {
-            // $product = Product::where('category_id', $category->id)->where('status', '0')->get();
-            $product = DB::table('products')->join('categories', 'category_id', '=', 'categories.id')->select('products.*', 'categories.slug as slugName', 'categories.name as categoryName')->where('category_id', $category->id)->where('products.status', '1')->get();
+            $getProduct = Product::where('category_id', $category->id)->where('status', '1')->get();
 
-            if ($product) {
+            // $getProduct = DB::table('products')->join('categories', 'category_id', '=', 'categories.id')->select('products.*', 'categories.slug as slugName', 'categories.name as categoryName')->where('category_id', $category->id)->where('products.status', '1')->get();
+
+            if ($getProduct) {
                 return response()->json([
                     'status' => 200,
-                    'product' => $product
+                    'product' => $getProduct
                 ]);
             }
         }
@@ -246,14 +285,13 @@ class ProductController extends Controller
                 ->join('products', 'product_color.product_id', '=', 'products.id')
                 ->join('color', 'product_color.color_id', '=', 'color.id')
                 ->select('product_color.id as _id', 'product_color.product_id', 'product_color.color_id', 'product_color.qty', 'product_color.price', 'product_color.status', 'color.*', 'color.name as colorName', 'products.name')
-                ->where('products.slug', 'like', $productSlug)
-                ->get();
+                ->where('products.slug', 'like', $productSlug)->where('product_color.status', '1')->get();
 
             $Sum = DB::table('product_color')
                 ->join('products', 'product_id', '=', 'products.id')
                 ->join('color', 'color_id', '=', 'color.id')
                 ->select('product_color.*', 'color.*', 'color.name as colorName', 'products.name')
-                ->where('products.slug', 'like', $productSlug)
+                ->where('products.slug', 'like', $productSlug)->where('product_color.status', '1')
                 ->sum('product_color.qty');
 
 
@@ -271,7 +309,7 @@ class ProductController extends Controller
     public function getDetailItem($id)
     {
 
-        $detailProduct = DB::table('product_color')->join('products', 'product_id', '=', 'products.id')->join('color', 'color_id', '=', 'color.id')->select('product_color.*', 'color.name as colorName', 'products.name')->where('product_color.id', 'like', $id)->get();
+        $detailProduct = DB::table('product_color')->join('products', 'product_id', '=', 'products.id')->join('color', 'color_id', '=', 'color.id')->select('product_color.*', 'color.name as colorName')->where('product_color.id', 'like', $id)->get();
         return response()->json([
             'status' => 200,
             'message' => "Get Data Detail Product Successfull",

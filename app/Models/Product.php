@@ -16,10 +16,12 @@ class Product extends Model
         'slug',
         'description',
         'brand_id',
+        'trending',
+        'weight',
         'photo',
         'status'
     ];
-    protected $with = ['category'];
+    protected $with = ['category', 'product_color'];
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id', 'id');
@@ -32,5 +34,10 @@ class Product extends Model
     public function colors()
     {
         return $this->belongsToMany(Color::class, 'product_color')->withTimestamps();
+    }
+
+    public function product_color()
+    {
+        return $this->belongsTo(Product_Color::class, 'id', 'product_id');
     }
 }
