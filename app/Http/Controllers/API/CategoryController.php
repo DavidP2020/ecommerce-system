@@ -37,6 +37,7 @@ class CategoryController extends Controller
             'name' => 'required|max:191',
             'slug' => 'required|max:191',
             'photo' => 'required',
+            'description' => 'max:255',
             'photo' => 'required|max:2048|image|mimes:jpg,png,jpeg',
         ]);
 
@@ -72,6 +73,7 @@ class CategoryController extends Controller
         $validator = Validator::make($req->all(), [
             'name' => 'required|max:191',
             'slug' => 'required|max:191',
+            'description' => 'max:255',
         ]);
 
         if ($validator->fails()) {

@@ -43,8 +43,9 @@ class AuthController extends Controller
         }
     }
 
-    //Login
 
+
+    //Login
     public function login(Request $req)
     {
         $validator = Validator::make($req->all(), [
@@ -71,6 +72,7 @@ class AuthController extends Controller
                 return response()->json([
                     'status' => 200,
                     'username' => $user->name,
+                    'email' => $user->email,
                     'role' => $user->role,
                     'token' => $token,
                     'message' => "Login Successfully",
@@ -88,5 +90,56 @@ class AuthController extends Controller
             'message' => 'Logged out successfully!',
             'status' => 200
         ], 200);
+    }
+
+    public function setProfile(Request $req, $id)
+    {
+        $validator = Validator::make($req->all(), [
+            'name' => 'required|max:255',
+            'gender' => 'required|max:255',
+            'phoneNum' => 'required|max:255',
+            'date_of_birth' => 'required|max:255',
+            'place_of_birth' => 'required|max:255',
+            'address' => 'required|max:255',
+            'state' => 'required|max:255',
+            'city' => 'required|max:255',
+            'zip' => 'required|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 403,
+                'validation_errors' => $validator->messages(),
+            ]);
+        } else {
+            $user = User::find($id);
+            $user->name = $req->input('name');
+            $user->gender = $req->input('gender');
+            $user->phoneNum = $req->input('phoneNum');
+            $user->place_of_birth = $req->input('place_of_birth');
+            $user->date_of_birth = $req->input('date_of_birth');
+            $user->address = $req->input('address');
+            $user->state = $req->input('state');
+            $user->city = $req->input('city');
+            $user->zip = $req->input('zip');
+            $user->status = $req->input('status') == true ? '1' : '0';
+            $user->update();
+
+            return response()->json([
+                'status' => 200,
+                'message' => "Profile Successfull Updated",
+            ]);
+        }
+    }
+
+    public function getProfile($email)
+    {
+        $userData = User::where('email', $email)->first();
+        if ($userData) {
+            return response()->json([
+                'status' => 200,
+                'user' => $userData,
+            ]);
+        }
     }
 }

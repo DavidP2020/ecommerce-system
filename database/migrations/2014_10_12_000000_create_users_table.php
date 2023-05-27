@@ -18,9 +18,15 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string("password");
             $table->string("gender")->default("");
+            $table->string("phoneNum")->default("");
+            $table->string("place_of_birth")->default("");
             $table->string("date_of_birth")->default("");
             $table->text("address")->default("");
+            $table->string("state")->default("");
+            $table->string("city")->default("");
+            $table->string("zip")->default("");
             $table->string('role')->default("USER");
+            $table->tinyInteger("status")->default(1);
             $table->rememberToken();
             $table->timestamps();
         });

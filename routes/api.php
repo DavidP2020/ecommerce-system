@@ -5,8 +5,10 @@ use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartControlller;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ColorController;
+use App\Http\Controllers\API\OrderControlller;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\WeightController;
+use App\Http\Controllers\API\WishListControlller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +39,7 @@ Route::get('products', [ProductController::class, 'viewProduct']);
 Route::post('products', [ProductController::class, 'addProduct']);
 Route::post('products/{id}', [ProductController::class, 'updateProduct']);
 Route::delete('detail-products/{id}', [ProductController::class, 'deleteDetailProduct']);
+Route::get('all-product', [ProductController::class, 'getProduct']);
 Route::delete('products/{id}', [ProductController::class, 'deleteProduct']);
 
 Route::get('detail-products/{id}', [ProductController::class, 'getDetail']);
@@ -46,11 +49,24 @@ Route::post('update-detail-products/{id}', [ProductController::class, 'editDetai
 
 Route::get('fetchProduct/{slug}', [ProductController::class, 'fetchProduct']);
 Route::get('fetchProduct/{slug}/{product}', [ProductController::class, 'fetchDetailProduct']);
+Route::get('trending-product', [ProductController::class, 'trendingProduct']);
+Route::get('fetchBrand/{name}', [ProductController::class, 'fetchBrand']);
+
 Route::get('detailProduct/{id}', [ProductController::class, 'getDetailItem']);
 
 Route::post('cart', [CartControlller::class, 'addToCart']);
 Route::get('cart', [CartControlller::class, 'viewCart']);
+Route::put('cart-updateQuantity/{cart_id}/{scope}', [CartControlller::class, 'updateQuantity']);
+Route::delete('cart/{cart_id}', [CartControlller::class, 'deleteCart']);
 
+Route::post('wishlist', [WishListControlller::class, 'addToWishlist']);
+Route::get('wishlist', [WishListControlller::class, 'viewWish']);
+Route::delete('wishlist/{wish_id}', [WishListControlller::class, 'deleteWish']);
+
+Route::post('place-order', [OrderControlller::class, 'placeOrder']);
+Route::post('validate-order', [OrderControlller::class, 'validateOrder']);
+Route::get('admin-order', [OrderControlller::class, 'viewOrder']);
+Route::get('all-brand', [BrandController::class, 'getBrand']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('checkingAuthenticated', function () {
@@ -60,13 +76,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ], 200);
     });
 
+    Route::post('profile', [AuthController::class, 'profile']);
     //Brand
-
     Route::get('brand', [BrandController::class, 'viewBrand']);
     Route::post('brand', [BrandController::class, 'addBrand']);
     Route::post('brand/{id}', [BrandController::class, 'updateBrand']);
     Route::delete('brand/{id}', [BrandController::class, 'deleteBrand']);
-    Route::get('all-brand', [BrandController::class, 'getBrand']);
 
     //Color
 
@@ -83,6 +98,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('weight/{id}', [WeightController::class, 'updateWeight']);
     Route::delete('weight/{id}', [WeightController::class, 'deleteWeight']);
 
+    Route::post('profile/{id}', [AuthController::class, 'setProfile']);
+    Route::get('profile/{email}', [AuthController::class, 'getProfile']);
     Route::post('logout', [AuthController::class, 'logout']);
 });
 

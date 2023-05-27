@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Product_Color;
@@ -24,6 +25,21 @@ class ProductController extends Controller
         ]);
     }
 
+    public function getProduct(Request $req)
+    {
+        $product = Product::where('status', '1')->get();
+        $Sum = DB::table('product_color')
+            ->join('products', 'product_id', '=', 'products.id')
+            ->select('product_color.*', 'products.name')
+            ->where('products.status', '1')
+            ->sum('product_color.qty');
+        return response()->json([
+            'status' => 200,
+            'message' => "Get data Product Successfull",
+            'product' => $product,
+            'total' => $Sum
+        ]);
+    }
     public function getDetail($id)
     {
         $getDetail = DB::table('product_color')->join('products', 'product_id', '=', 'products.id')->join('color', 'color_id', '=', 'color.id')->select('product_color.*', 'color.name as colorName', 'products.name')->where('product_id', 'like', $id)->get();
@@ -41,6 +57,7 @@ class ProductController extends Controller
             'name' => 'required|max:191',
             'slug' => 'required|max:191',
             'photo' => 'required',
+            'description' => 'max:5000',
             'photo' => 'required|max:2048|image|mimes:jpg,png,jpeg',
         ]);
 
@@ -56,9 +73,9 @@ class ProductController extends Controller
             $product->slug = $req->input('slug');
             $product->trending = $req->input('trending');
             $product->weight = $req->input('weight');
+            $product->unit = $req->input('unit');
             $product->description = $req->input('description');
             $product->brand_id = $req->input('brand_id');
-
 
             if ($req->hasFile('photo')) {
                 $file = $req->file('photo');
@@ -160,6 +177,7 @@ class ProductController extends Controller
             'category_id' => 'required|max:191',
             'name' => 'required|max:191',
             'slug' => 'required|max:191',
+            'description' => 'max:5000',
         ]);
 
         if ($validator->fails()) {
@@ -178,6 +196,7 @@ class ProductController extends Controller
                 $product->brand_id = $req->input('brand_id');
                 $product->description = $req->input('description');
                 $product->weight = $req->input('weight');
+                $product->unit = $req->input('unit');
 
                 if ($req->hasFile('photo')) {
                     $path = $product->photo;
@@ -250,13 +269,18 @@ class ProductController extends Controller
         $category = Category::where('slug', $slug)->where('status', '1')->first();
         if ($category) {
             $getProduct = Product::where('category_id', $category->id)->where('status', '1')->get();
-
+            $Sum = DB::table('product_color')
+                ->join('products', 'product_id', '=', 'products.id')
+                ->select('product_color.*', 'products.name')
+                ->where('products.trending', '1')->where('products.status', '1')
+                ->sum('product_color.qty');
             // $getProduct = DB::table('products')->join('categories', 'category_id', '=', 'categories.id')->select('products.*', 'categories.slug as slugName', 'categories.name as categoryName')->where('category_id', $category->id)->where('products.status', '1')->get();
 
             if ($getProduct) {
                 return response()->json([
                     'status' => 200,
-                    'product' => $getProduct
+                    'product' => $getProduct,
+                    'total' => $Sum,
                 ]);
             }
         }
@@ -312,8 +336,41 @@ class ProductController extends Controller
         $detailProduct = DB::table('product_color')->join('products', 'product_id', '=', 'products.id')->join('color', 'color_id', '=', 'color.id')->select('product_color.*', 'color.name as colorName')->where('product_color.id', 'like', $id)->get();
         return response()->json([
             'status' => 200,
-            'message' => "Get Data Detail Product Successfull",
+            'message' => "Get Data Product Successfull",
             'getDetail' => $detailProduct
         ]);
+    }
+
+    public function trendingProduct()
+    {
+        $product = Product::where('trending', '1')->where('status', '1')->get();
+        $Sum = DB::table('product_color')
+            ->join('products', 'product_id', '=', 'products.id')
+            ->select('product_color.*', 'products.name')
+            ->where('products.trending', '1')->where('products.status', '1')
+            ->sum('product_color.qty');
+
+        if ($product) {
+            return response()->json([
+                'status' => 200,
+                'product' => $product,
+                'total' => $Sum,
+            ]);
+        }
+    }
+
+    public function fetchBrand($name)
+    {
+        $brand = Brand::where('name', $name)->where('status', '1')->first();
+        if ($brand) {
+            $getProduct = Product::where('brand_id', $brand->id)->where('status', '1')->get();
+
+            if ($getProduct) {
+                return response()->json([
+                    'status' => 200,
+                    'product' => $getProduct
+                ]);
+            }
+        }
     }
 }

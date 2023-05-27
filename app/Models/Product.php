@@ -17,18 +17,21 @@ class Product extends Model
         'description',
         'brand_id',
         'trending',
+        'wishlist',
         'weight',
+        'unit',
+        'unit',
         'photo',
         'status'
     ];
-    protected $with = ['category', 'product_color'];
+    protected $with = ['category', 'product_color', 'brand'];
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id', 'id');
     }
     public function brand()
     {
-        return $this->belongsTo(Category::class, 'brand_id', 'id');
+        return $this->belongsTo(Brand::class, 'brand_id', 'id');
     }
 
     public function colors()

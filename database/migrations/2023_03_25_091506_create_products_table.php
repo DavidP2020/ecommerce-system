@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreign('brand_id')->references('id')->on('brand')->cascadeOnDelete('cascade');
             $table->string("photo")->nullable();
             $table->integer('weight')->nullable();
+            $table->string('unit')->nullable();
             $table->string("description", 5000)->nullable();
             $table->boolean("trending")->default(0);
             $table->tinyInteger("status")->default(1);
