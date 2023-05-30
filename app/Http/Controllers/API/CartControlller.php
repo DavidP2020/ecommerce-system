@@ -61,7 +61,7 @@ class CartControlller extends Controller
             $user_id = auth('sanctum')->user()->id;
 
             // $cart = Cart::where('user_id', $user_id)->get();
-            $cart = DB::table('cart')->join('product_color', 'cart.product_id', '=', 'product_color.id')->join('products', 'product_color.product_id', '=', 'products.id')->join('color', 'product_color.color_id', '=', 'color.id')->select('cart.*', 'product_color.price', 'products.name as productName', 'products.photo', 'color.name as colorName', 'color.color', 'product_color.qty as qty')->where('user_id', $user_id)->get();
+            $cart = DB::table('cart')->join('product_color', 'cart.product_id', '=', 'product_color.id')->join('products', 'product_color.product_id', '=', 'products.id')->join('color', 'product_color.color_id', '=', 'color.id')->select('cart.*', 'product_color.price', 'products.name as productName', 'products.photo', 'products.weight', 'products.unit', 'color.name as colorName', 'color.color', 'product_color.qty as qty')->where('user_id', $user_id)->get();
             return response()->json([
                 'status' => 200,
                 "cart" => $cart

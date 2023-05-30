@@ -118,19 +118,36 @@ class OrderControlller extends Controller
 
             $order = Order::all();
 
+
+            return response()->json([
+                'status' => 200,
+                'message' => "Get data Order Successfull",
+                'order' => $order,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Order Status"
+            ]);
+        }
+    }
+
+    public function viewDetailOrder(Request $req, $id)
+    {
+        if (auth('sanctum')->check()) {
             $orderDetail = DB::table('orders')
                 ->join('orders_items', 'orders_items.order_id', '=', 'orders.id')
                 ->join('color', 'color.id', '=', 'orders_items.color')
                 ->join('product_color', 'product_color.id', '=', 'orders_items.product_id')
                 ->join('products', 'products.id', '=', 'product_color.product_id')
                 ->join('brand', 'brand.id', '=', 'products.brand_id')
-                ->select('orders_items.qty', 'orders_items.price', 'color.name as colorName', 'products.name as productName', 'products.weight', 'brand.name as brandName')->get();
+                ->select('orders_items.qty', 'orders_items.price', 'color.name as colorName', 'products.name as productName', 'products.weight', 'products.unit', 'brand.name as brandName')
+                ->where('orders.id', '=', $id)->get();
+
 
             return response()->json([
                 'status' => 200,
-                'message' => "Get data Order Successfull",
-                'order' => $order,
-                'orderDetail' => $orderDetail
+                'orderDetail' => $orderDetail,
             ]);
         } else {
             return response()->json([

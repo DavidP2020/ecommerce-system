@@ -42,9 +42,6 @@ class AuthController extends Controller
             ]);
         }
     }
-
-
-
     //Login
     public function login(Request $req)
     {
@@ -131,6 +128,25 @@ class AuthController extends Controller
             ]);
         }
     }
+    public function setStatus(Request $req, $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+
+            $user->status = $req->input('status');
+            $user->update();
+
+            return response()->json([
+                'status' => 200,
+                'message' => "Status Successfull Updated",
+            ]);
+        } else {
+            return response()->json([
+                'status' => 404,
+                "message" => "Product Not Found"
+            ]);
+        }
+    }
 
     public function getProfile($email)
     {
@@ -139,6 +155,65 @@ class AuthController extends Controller
             return response()->json([
                 'status' => 200,
                 'user' => $userData,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 404,
+                "message" => "Profile Data Not Found"
+            ]);
+        }
+    }
+
+    public function viewUser(Request $req)
+    {
+        $user = User::all();
+        return response()->json([
+            'status' => 200,
+            'message' => "Get data User Successfull",
+            'category' => $user
+        ]);
+    }
+
+    public function reset(Request $req, $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $user->password = Hash::make("12345678");
+            $user->update();
+
+            return response()->json([
+                'status' => 200,
+                'message' => "Reset Account Successfull Updated",
+            ]);
+        } else {
+            return response()->json([
+                'status' => 404,
+                "message" => "Account Not Found"
+            ]);
+        }
+    }
+    public function changePass(Request $req, $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            if (Hash::check($req->oldPass, $user->password)) {
+                $user->password = Hash::make($req->password);
+                $user->update();
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Change Password Successfull Updated",
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 403,
+                    'message' => "Password Doesn't Match",
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => 404,
+                "message" => "Account Not Found"
             ]);
         }
     }

@@ -66,6 +66,7 @@ Route::delete('wishlist/{wish_id}', [WishListControlller::class, 'deleteWish']);
 Route::post('place-order', [OrderControlller::class, 'placeOrder']);
 Route::post('validate-order', [OrderControlller::class, 'validateOrder']);
 Route::get('admin-order', [OrderControlller::class, 'viewOrder']);
+Route::get('detail-order/{id}', [OrderControlller::class, 'viewDetailOrder']);
 Route::get('all-brand', [BrandController::class, 'getBrand']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -76,7 +77,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ], 200);
     });
 
-    Route::post('profile', [AuthController::class, 'profile']);
     //Brand
     Route::get('brand', [BrandController::class, 'viewBrand']);
     Route::post('brand', [BrandController::class, 'addBrand']);
@@ -98,8 +98,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('weight/{id}', [WeightController::class, 'updateWeight']);
     Route::delete('weight/{id}', [WeightController::class, 'deleteWeight']);
 
+    Route::get('users', [AuthController::class, 'viewUser']);
+    Route::post('user-status/{id}', [AuthController::class, 'setStatus']);
+    Route::post('profile', [AuthController::class, 'profile']);
     Route::post('profile/{id}', [AuthController::class, 'setProfile']);
     Route::get('profile/{email}', [AuthController::class, 'getProfile']);
+    Route::post('reset/{id}', [AuthController::class, 'reset']);
+    Route::post('forgot/{email}', [AuthController::class, 'reset']);
+    Route::post('change-pass/{id}', [AuthController::class, 'changePass']);
     Route::post('logout', [AuthController::class, 'logout']);
 });
 

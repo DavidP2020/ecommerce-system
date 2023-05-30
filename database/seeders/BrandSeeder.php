@@ -41,7 +41,7 @@ class BrandSeeder extends Seeder
         DB::table('Brand')->insert([
             'name' => 'Tanpa Brand',
             'status' => 1,
-            'photo' => 'uploads/brand/Jotun.jpeg',
+            'photo' => 'uploads/brand/Lainnya.jpeg',
         ]);
     }
 }
