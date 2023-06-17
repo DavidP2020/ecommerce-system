@@ -21,11 +21,16 @@ return new class extends Migration
             $table->string("city");
             $table->string("state");
             $table->string("zip");
-            $table->string("payment_id")->nullable();
             $table->string("payment_mode");
-            $table->string("tracking_no");
-            $table->tinyInteger("status")->default(1);
-            $table->text("remark");
+            $table->string('transaction_id');
+            $table->string('order_id');
+            $table->string('gross_amount');
+            $table->string('payment_code')->nullable();
+            $table->string('cancelBy')->nullable();
+            $table->string('paidBy')->nullable();
+            $table->string('acceptBy')->nullable();
+            $table->string('pdf_url')->nullable();
+            $table->string("status");
             $table->timestamps();
         });
     }

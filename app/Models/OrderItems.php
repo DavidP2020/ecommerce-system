@@ -16,4 +16,9 @@ class OrderItems extends Model
         'qty',
         'price',
     ];
+    protected $with = ['product'];
+    public function product()
+    {
+        return $this->belongsTo(Product_Color::class, 'product_id', 'id');
+    }
 }

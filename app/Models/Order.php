@@ -17,11 +17,10 @@ class Order extends Model
         'city',
         'state',
         'zip',
-        'payment_id',
+        'gross_amount',
         'payment_mode',
-        'tracking_no',
+        'pdf_url',
         'status',
-        'remark',
     ];
     protected $with = ['orderItems'];
 

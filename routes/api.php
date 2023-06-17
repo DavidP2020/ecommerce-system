@@ -64,9 +64,17 @@ Route::get('wishlist', [WishListControlller::class, 'viewWish']);
 Route::delete('wishlist/{wish_id}', [WishListControlller::class, 'deleteWish']);
 
 Route::post('place-order', [OrderControlller::class, 'placeOrder']);
+Route::post('place-order/{id}', [OrderControlller::class, 'paymentOrder']);
+Route::post('cancel-order/{id}', [OrderControlller::class, 'cancelOrder']);
 Route::post('validate-order', [OrderControlller::class, 'validateOrder']);
-Route::get('admin-order', [OrderControlller::class, 'viewOrder']);
+Route::post('order-status/{id}', [OrderControlller::class, 'setPayment']);
+Route::get('admin-order/{id}', [OrderControlller::class, 'viewOrder']);
 Route::get('detail-order/{id}', [OrderControlller::class, 'viewDetailOrder']);
+
+// Payment Check
+Route::post('payment', [OrderControlller::class, 'payment']);
+Route::post('paymentCheck/{id}', [OrderControlller::class, 'paymentOrderCheck']);
+
 Route::get('all-brand', [BrandController::class, 'getBrand']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
