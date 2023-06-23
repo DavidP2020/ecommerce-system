@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItems;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ class OrderControlller extends Controller
     //
     public function placeOrder(Request $req)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $validator = Validator::make($req->all(), [
                 'name' => 'required|max:191',
                 'phoneNum' => 'required|max:191',
@@ -33,10 +35,10 @@ class OrderControlller extends Controller
                     'validation_errors' => $validator->messages(),
                 ]);
             } else {
-                $user_id = auth('sanctum')->user()->id;
+                $user_id = auth()->user()->id;
 
                 $order = new Order();
-                $order->user_id = auth('sanctum')->user()->id;
+                $order->user_id = auth()->user()->id;
                 $order->name = $req->input('name');
                 $order->phoneNum = $req->input('phoneNum');
                 $order->email = $req->input('email');
@@ -84,6 +86,7 @@ class OrderControlller extends Controller
                 return response()->json([
                     'status' => 200,
                     'message' => "Order Added Successfully",
+                    'mid' => env("MIDTRANS_SERVER_KEY"),
                 ]);
             }
         } else {
@@ -96,7 +99,7 @@ class OrderControlller extends Controller
 
     public function paymentOrder(Request $req, $id)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $order = Order::find($id);
             if ($order) {
                 if ($req->input('payment_mode') == 'COD') {
@@ -137,7 +140,7 @@ class OrderControlller extends Controller
 
     public function cancelOrder(Request $req, $id)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $order = Order::find($id);
             if ($order) {
                 $order->status = $req->input('status');
@@ -171,7 +174,7 @@ class OrderControlller extends Controller
 
     public function validateOrder(Request $req)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $validator = Validator::make($req->all(), [
                 'name' => 'required|max:191',
                 'phoneNum' => 'required|max:191',
@@ -204,7 +207,7 @@ class OrderControlller extends Controller
 
     public function viewOrder(Request $req, $id)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $admin = User::where('id', $id)->first();
 
             if ($admin->role == 'ADMIN') {
@@ -228,7 +231,7 @@ class OrderControlller extends Controller
 
     public function viewDetailOrder(Request $req, $id)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $orderDetail = DB::table('orders')
                 ->join('orders_items', 'orders_items.order_id', '=', 'orders.id')
                 ->join('color', 'color.id', '=', 'orders_items.color')
@@ -255,7 +258,6 @@ class OrderControlller extends Controller
     {
         $paid = Order::find($id);
         if ($paid) {
-
             $paid->status = $req->input('status');
             $paid->acceptBy = $req->input('acceptBy');
             $paid->update();
@@ -274,7 +276,7 @@ class OrderControlller extends Controller
 
     public function payment(Request $req)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             $validator = Validator::make($req->all(), [
                 'name' => 'required|max:191',
                 'phoneNum' => 'required|max:191',
@@ -292,14 +294,14 @@ class OrderControlller extends Controller
                 ]);
             } else {
                 // Set your Merchant Server Key
-                \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+                \Midtrans\Config::$serverKey = env("MIDTRANS_SERVER_KEY");
                 // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
                 \Midtrans\Config::$isProduction = false;
                 // Set sanitization on (default)
                 \Midtrans\Config::$isSanitized = true;
                 // Set 3DS transaction for credit card to true
                 \Midtrans\Config::$is3ds = true;
-                $user_id = auth('sanctum')->user()->id;
+                $user_id = auth()->user()->id;
                 $cart = Cart::where('user_id', $user_id)->get();
                 // $Sum = DB::table('cart')
                 //     ->join('product_color', 'cart.product_id', '=', 'product_color.id')
@@ -340,16 +342,16 @@ class OrderControlller extends Controller
 
     public function paymentOrderCheck(Request $req, $id)
     {
-        if (auth('sanctum')->check()) {
+        if (auth()->user()) {
             // Set your Merchant Server Key
-            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_K');
             // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
             \Midtrans\Config::$isProduction = false;
             // Set sanitization on (default)
             \Midtrans\Config::$isSanitized = true;
             // Set 3DS transaction for credit card to true
             \Midtrans\Config::$is3ds = true;
-            $user_id = auth('sanctum')->user()->id;
+            $user_id = auth()->user()->id;
             $order = Order::where('user_id', $user_id)->where('id', $id)->first();
             $params = array(
                 'transaction_details' => array(
@@ -376,6 +378,48 @@ class OrderControlller extends Controller
             return response()->json([
                 'status' => 401,
                 "message" => "Login to View Order Status"
+            ]);
+        }
+    }
+
+    public function analystData(Request $req)
+    {
+        if (auth()->user()) {
+            $totalProduct = Product::all()->count();
+            $totalCategory = Category::all()->count();
+            $totalUser = User::where('role', 'USER')->where('status', 1)->count();
+
+            $totalOrder = Order::where('user_id', auth()->user()->id)->count();
+            $totalOrderAll = Order::all()->count();
+
+            $totalPurchase = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->count();
+            $totalMoneyPurchasing = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->sum('gross_amount');
+            $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->sum('gross_amount');
+            $totalPurchaseAll = Order::where('status', '=', "settlement")->count();
+
+            $totalUnpaid = Order::where('status', '!=', "settlement")->where('user_id', auth()->user()->id)->count();
+            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('user_id', auth()->user()->id)->sum('gross_amount');
+            $totalUnpaidAll = Order::where('status', '!=', "settlement")->count();
+            return response()->json([
+                'status' => 200,
+                "totalOrder" => $totalOrder,
+                "totalOrderAll" => $totalOrderAll,
+                "totalPurchase" => $totalPurchase,
+                "totalMoneyPurchasing" => $totalMoneyPurchasing,
+                "totalMoneyPurchasingAll" => $totalMoneyPurchasingAll,
+                "totalPurchaseAll" => $totalPurchaseAll,
+                "totalUnpaid" => $totalUnpaid,
+                "totalMoneyUnpaid" => $totalMoneyUnpaid,
+                "totalUnpaidAll" => $totalUnpaidAll,
+                "totalProduct" => $totalProduct,
+                "totalCategory" => $totalCategory,
+                "totalUser" => $totalUser,
+                "user" => auth()->user(),
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
             ]);
         }
     }

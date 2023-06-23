@@ -13,8 +13,8 @@ class WishListControlller extends Controller
     //    
     public function addToWishlist(Request $req)
     {
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
             $product_id = $req->product_id;
 
             $checkWish = Product_Color::where('id', $product_id)->first();
@@ -55,8 +55,8 @@ class WishListControlller extends Controller
     public function viewWish()
     {
 
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
 
             // $cart = Cart::where('user_id', $user_id)->get();
             $wishlist = DB::table('wishlist')->join('product_color', 'wishlist.product_id', '=', 'product_color.id')->join('products', 'product_color.product_id', '=', 'products.id')->join('color', 'product_color.color_id', '=', 'color.id')->select('wishlist.*', 'product_color.price', 'products.name as productName', 'products.photo', 'color.name as colorName', 'color.color', 'product_color.qty as qty')->where('user_id', $user_id)->get();
@@ -75,8 +75,8 @@ class WishListControlller extends Controller
 
     public function deleteWish($wish_id)
     {
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
             $wishItem = Wishlist::where('id', $wish_id)->where('user_id', $user_id)->first();
 
             if ($wishItem) {

@@ -75,15 +75,20 @@ Route::get('detail-order/{id}', [OrderControlller::class, 'viewDetailOrder']);
 Route::post('payment', [OrderControlller::class, 'payment']);
 Route::post('paymentCheck/{id}', [OrderControlller::class, 'paymentOrderCheck']);
 
+Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+
 Route::get('all-brand', [BrandController::class, 'getBrand']);
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::group(['middleware' => 'api'], function () {
     Route::get('checkingAuthenticated', function () {
         return response()->json([
             'message' => 'You are in!',
             'status' => 200
         ], 200);
     });
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('refresh', [AuthController::class, 'refresh']);
+    Route::post('me', [AuthController::class, 'me']);
 
     //Brand
     Route::get('brand', [BrandController::class, 'viewBrand']);
@@ -115,6 +120,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('forgot/{email}', [AuthController::class, 'reset']);
     Route::post('change-pass/{id}', [AuthController::class, 'changePass']);
     Route::post('logout', [AuthController::class, 'logout']);
+
+    Route::get('send-verify-mail/{email}', [AuthController::class, 'sendVerifyMail']);
+    Route::get('dashboard', [OrderControlller::class, 'analystData']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

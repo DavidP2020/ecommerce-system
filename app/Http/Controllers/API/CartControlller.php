@@ -15,8 +15,8 @@ class CartControlller extends Controller
     public function addToCart(Request $req)
     {
 
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
             $product_id = $req->product_id;
             $product_qty = $req->product_qty;
 
@@ -57,8 +57,8 @@ class CartControlller extends Controller
     public function viewCart()
     {
 
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
 
             // $cart = Cart::where('user_id', $user_id)->get();
             $cart = DB::table('cart')->join('product_color', 'cart.product_id', '=', 'product_color.id')->join('products', 'product_color.product_id', '=', 'products.id')->join('color', 'product_color.color_id', '=', 'color.id')->select('cart.*', 'product_color.price', 'products.name as productName', 'products.photo', 'products.weight', 'products.unit', 'color.name as colorName', 'color.color', 'product_color.qty as qty')->where('user_id', $user_id)->get();
@@ -76,8 +76,8 @@ class CartControlller extends Controller
 
     public function updateQuantity($cart_id, $scope)
     {
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
             $cartItem = Cart::where('id', $cart_id)->where('user_id', $user_id)->first();
 
             if ($scope == 'dec') {
@@ -100,8 +100,8 @@ class CartControlller extends Controller
 
     public function deleteCart($cart_id)
     {
-        if (auth('sanctum')->check()) {
-            $user_id = auth('sanctum')->user()->id;
+        if (auth()->user()) {
+            $user_id = auth()->user()->id;
             $cartItem = Cart::where('id', $cart_id)->where('user_id', $user_id)->first();
 
             if ($cartItem) {
