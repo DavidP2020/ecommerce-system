@@ -288,9 +288,11 @@ class AuthController extends Controller
                 $url = $domain . '/verify-mail/' . $random;
 
                 $data['url'] = $url;
+                $data['username'] = $user[0]->name;
+                $data['ecommerce'] = "Ecommerce";
                 $data['email'] = $email;
                 $data['title'] = 'Email Verification';
-                $data['body'] = "Please click on below link to verify your email.";
+                $data['body'] = "Verify your account.";
 
                 // Mail::to("dasdsa@gmail.com0")->send(new verifMail());
 
@@ -323,40 +325,53 @@ class AuthController extends Controller
     public function forgotPassword(Request $req)
     {
         try {
-            $user = User::where('email', $req->email)->get();
+            $validator = Validator::make($req->all(), [
+                'email' => 'required|email|max:255',
+            ]);
 
-            if (count($user) > 0) {
-                $token = Str::random(40);
-                $domain = URL::to('/');
-                $url = $domain . '/reset-password?token=' . $token;
-
-                $data['url'] = $url;
-                $data['email'] = $req->email;
-                $data['title'] = 'Password Reset';
-                $data['body'] = "Please click on below link to reset your password.";
-
-                Mail::send('forgetPasswordMail', ['data' => $data], function ($message) use ($data) {
-                    $message->to($data['email'])->subject($data['title']);
-                });
-
-                $dateTime = Carbon::now()->format('Y-m-d H:i:s');
-                PasswordReset::updateOrCreate(
-                    ['email' => $req->email],
-                    [
-                        'email' => $req->email,
-                        'token' => $token,
-                        'created_at' => $dateTime,
-                    ]
-                );
+            if ($validator->fails()) {
                 return response()->json([
-                    'status' => 200,
-                    "message" => "Please Check Your Mail To Reset Your Password"
+                    'status' => 403,
+                    'validation_errors' => $validator->messages(),
                 ]);
             } else {
-                return response()->json([
-                    'status' => 401,
-                    "message" => "User is Not Found"
-                ]);
+                $user = User::where('email', $req->email)->get();
+
+                if (count($user) > 0) {
+                    $token = Str::random(40);
+                    $domain = URL::to('/');
+                    $url = $domain . '/reset-password?token=' . $token;
+
+                    $data['url'] = $url;
+                    $data['username'] = $user[0]->name;
+                    $data['ecommerce'] = "Ecommerce";
+                    $data['email'] = $req->email;
+                    $data['title'] = 'Password Reset';
+                    $data['body'] = "Reset your Password.";
+
+                    Mail::send('forgetPasswordMail', ['data' => $data], function ($message) use ($data) {
+                        $message->to($data['email'])->subject($data['title']);
+                    });
+
+                    $dateTime = Carbon::now()->format('Y-m-d H:i:s');
+                    PasswordReset::updateOrCreate(
+                        ['email' => $req->email],
+                        [
+                            'email' => $req->email,
+                            'token' => $token,
+                            'created_at' => $dateTime,
+                        ]
+                    );
+                    return response()->json([
+                        'status' => 200,
+                        "message" => "Please Check Your Mail To Reset Your Password"
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 401,
+                        "message" => "User is Not Found"
+                    ]);
+                }
             }
         } catch (\Exception $e) {
             return response()->json([
@@ -378,7 +393,7 @@ class AuthController extends Controller
                 $user->remember_token = '';
                 $user->email_verified_at = $dateTime;
                 $user->save();
-                return "<h1?>Email Verified Successfull</h1>";
+                return view('successVerify');
             } else {
                 return response()->json([
                     'status' => 401,
@@ -416,6 +431,6 @@ class AuthController extends Controller
 
         PasswordReset::where('email', $user->email)->delete();
 
-        return "<h1?>Your Password has been reset Successfull</h1>";
+        return view('successReset');
     }
 }

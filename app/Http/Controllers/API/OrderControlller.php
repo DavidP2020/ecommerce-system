@@ -19,74 +19,82 @@ class OrderControlller extends Controller
     public function placeOrder(Request $req)
     {
         if (auth()->user()) {
-            $validator = Validator::make($req->all(), [
-                'name' => 'required|max:191',
-                'phoneNum' => 'required|max:191',
-                'email' => 'required|max:191',
-                'address' => 'required|max:191',
-                'city' => 'required|max:191',
-                'state' => 'required|max:191',
-                'zip' => 'required|max:191',
-            ]);
+            if (auth()->user()->is_verified === 1) {
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 422,
-                    'validation_errors' => $validator->messages(),
+                $validator = Validator::make($req->all(), [
+                    'name' => 'required|max:191',
+                    'phoneNum' => 'required|max:191',
+                    'email' => 'required|max:191',
+                    'address' => 'required|max:191',
+                    'city' => 'required|max:191',
+                    'state' => 'required|max:191',
+                    'zip' => 'required|max:191',
                 ]);
-            } else {
-                $user_id = auth()->user()->id;
 
-                $order = new Order();
-                $order->user_id = auth()->user()->id;
-                $order->name = $req->input('name');
-                $order->phoneNum = $req->input('phoneNum');
-                $order->email = $req->input('email');
-                $order->address = $req->input('address');
-                $order->city = $req->input('city');
-                $order->state = $req->input('state');
-                $order->zip = $req->input('zip');
-                $order->payment_mode = $req->input('payment_mode');
-                $order->gross_amount = $req->input('gross_amount');
-
-                if ($req->input('payment_mode') == 'COD') {
-                    $order->transaction_id = 'Ecommerce' . rand(1111, 9999);
-                    $order->order_id = 'Order' . rand(1111, 9999);
-                    $order->status = $req->input('status');
+                if ($validator->fails()) {
+                    return response()->json([
+                        'status' => 422,
+                        'validation_errors' => $validator->messages(),
+                    ]);
                 } else {
-                    $order->transaction_id = $req->input('transaction_id');
-                    $order->order_id = $req->input('order_id');
-                    $order->payment_code = $req->input('payment_code');
-                    $order->pdf_url = $req->input('pdf_url');
-                    $order->status = $req->input('status');
-                }
-                $order->save();
+                    $user_id = auth()->user()->id;
 
-                $cart = Cart::where('user_id', $user_id)->get();
-                $orderitems = [];
-                foreach ($cart as $item) {
-                    $orderitems[] = [
-                        'product_id' => $item->product_id,
-                        'color' => $item->product->color_id,
-                        'qty' => $item->product_qty,
-                        'price' => $item->product->price,
-                    ];
+                    $order = new Order();
+                    $order->user_id = auth()->user()->id;
+                    $order->name = $req->input('name');
+                    $order->phoneNum = $req->input('phoneNum');
+                    $order->email = $req->input('email');
+                    $order->address = $req->input('address');
+                    $order->city = $req->input('city');
+                    $order->state = $req->input('state');
+                    $order->zip = $req->input('zip');
+                    $order->payment_mode = $req->input('payment_mode');
+                    $order->gross_amount = $req->input('gross_amount');
 
-                    if ($order->status == 'settlement') {
-                        $order->paidBy = $req->input('paidBy');
-                        $item->product->update([
-                            'qty' => $item->product->qty - $item->product_qty
-                        ]);
+                    if ($req->input('payment_mode') == 'COD') {
+                        $order->transaction_id = 'Ecommerce' . rand(1111, 9999);
+                        $order->order_id = 'Order' . rand(1111, 9999);
+                        $order->status = $req->input('status');
+                    } else {
+                        $order->transaction_id = $req->input('transaction_id');
+                        $order->order_id = $req->input('order_id');
+                        $order->payment_code = $req->input('payment_code');
+                        $order->pdf_url = $req->input('pdf_url');
+                        $order->status = $req->input('status');
                     }
+                    $order->save();
+
+                    $cart = Cart::where('user_id', $user_id)->get();
+                    $orderitems = [];
+                    foreach ($cart as $item) {
+                        $orderitems[] = [
+                            'product_id' => $item->product_id,
+                            'color' => $item->product->color_id,
+                            'qty' => $item->product_qty,
+                            'price' => $item->product->price,
+                        ];
+
+                        if ($order->status == 'settlement') {
+                            $order->paidBy = $req->input('paidBy');
+                            $item->product->update([
+                                'qty' => $item->product->qty - $item->product_qty
+                            ]);
+                        }
+                    }
+
+                    $order->orderitems()->createMany($orderitems);
+                    Cart::destroy($cart);
+
+                    return response()->json([
+                        'status' => 200,
+                        'message' => "Order Added Successfully",
+                        'mid' => env("MIDTRANS_SERVER_KEY"),
+                    ]);
                 }
-
-                $order->orderitems()->createMany($orderitems);
-                Cart::destroy($cart);
-
+            } else {
                 return response()->json([
-                    'status' => 200,
-                    'message' => "Order Added Successfully",
-                    'mid' => env("MIDTRANS_SERVER_KEY"),
+                    'status' => 403,
+                    "message" => "Please Verified Your Account First!"
                 ]);
             }
         } else {
@@ -100,34 +108,42 @@ class OrderControlller extends Controller
     public function paymentOrder(Request $req, $id)
     {
         if (auth()->user()) {
-            $order = Order::find($id);
-            if ($order) {
-                if ($req->input('payment_mode') == 'COD') {
-                    $order->transaction_id = 'Ecommerce' . rand(1111, 9999);
-                    $order->order_id = 'Order' . rand(1111, 9999);
-                    $order->status = $req->input('status');
-                } else {
-                    $order->transaction_id = $req->input('transaction_id');
-                    $order->order_id = $req->input('order_id');
-                    $order->payment_code = $req->input('payment_code');
-                    $order->pdf_url = $req->input('pdf_url');
-                    $order->status = $req->input('status');
-                }
-                $order->update();
+            if (auth()->user()->is_verified === 1) {
 
-                $ord = OrderItems::where('order_id', $id)->get();
-                foreach ($ord as $item) {
-                    if ($order->status == 'settlement') {
-                        $order->paidBy = $req->input('paidBy');
-                        $item->product->update([
-                            'qty' => $item->product->qty - $item->qty
-                        ]);
+                $order = Order::find($id);
+                if ($order) {
+                    if ($req->input('payment_mode') == 'COD') {
+                        $order->transaction_id = 'Ecommerce' . rand(1111, 9999);
+                        $order->order_id = 'Order' . rand(1111, 9999);
+                        $order->status = $req->input('status');
+                    } else {
+                        $order->transaction_id = $req->input('transaction_id');
+                        $order->order_id = $req->input('order_id');
+                        $order->payment_code = $req->input('payment_code');
+                        $order->pdf_url = $req->input('pdf_url');
+                        $order->status = $req->input('status');
                     }
-                }
+                    $order->update();
 
+                    $ord = OrderItems::where('order_id', $id)->get();
+                    foreach ($ord as $item) {
+                        if ($order->status == 'settlement') {
+                            $order->paidBy = $req->input('paidBy');
+                            $item->product->update([
+                                'qty' => $item->product->qty - $item->qty
+                            ]);
+                        }
+                    }
+
+                    return response()->json([
+                        'status' => 200,
+                        'message' => "Pembayaran Berhasil",
+                    ]);
+                }
+            } else {
                 return response()->json([
-                    'status' => 200,
-                    'message' => "Pembayaran Berhasil",
+                    'status' => 403,
+                    "message" => "Please Verified Your Account First!"
                 ]);
             }
         } else {
@@ -175,26 +191,34 @@ class OrderControlller extends Controller
     public function validateOrder(Request $req)
     {
         if (auth()->user()) {
-            $validator = Validator::make($req->all(), [
-                'name' => 'required|max:191',
-                'phoneNum' => 'required|max:191',
-                'email' => 'required|max:191',
-                'address' => 'required|max:191',
-                'city' => 'required|max:191',
-                'state' => 'required|max:191',
-                'zip' => 'required|max:191',
-            ]);
+            if (auth()->user()->is_verified === 1) {
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 422,
-                    'validation_errors' => $validator->messages(),
+                $validator = Validator::make($req->all(), [
+                    'name' => 'required|max:191',
+                    'phoneNum' => 'required|max:191',
+                    'email' => 'required|max:191',
+                    'address' => 'required|max:191',
+                    'city' => 'required|max:191',
+                    'state' => 'required|max:191',
+                    'zip' => 'required|max:191',
                 ]);
-            } else {
 
+                if ($validator->fails()) {
+                    return response()->json([
+                        'status' => 422,
+                        'validation_errors' => $validator->messages(),
+                    ]);
+                } else {
+
+                    return response()->json([
+                        'status' => 200,
+                        'message' => "Form Validated Successfully",
+                    ]);
+                }
+            } else {
                 return response()->json([
-                    'status' => 200,
-                    'message' => "Form Validated Successfully",
+                    'status' => 403,
+                    "message" => "Please Verified Your Account First!"
                 ]);
             }
         } else {
@@ -256,20 +280,27 @@ class OrderControlller extends Controller
 
     public function setPayment(Request $req, $id)
     {
-        $paid = Order::find($id);
-        if ($paid) {
-            $paid->status = $req->input('status');
-            $paid->acceptBy = $req->input('acceptBy');
-            $paid->update();
+        if (auth()->user()) {
+            $paid = Order::find($id);
+            if ($paid) {
+                $paid->status = $req->input('status');
+                $paid->acceptBy = $req->input('acceptBy');
+                $paid->update();
 
-            return response()->json([
-                'status' => 200,
-                'message' => "Transaction Paid",
-            ]);
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Transaction Paid",
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 404,
+                    "message" => "Transaction Not Found"
+                ]);
+            }
         } else {
             return response()->json([
-                'status' => 404,
-                "message" => "Transaction Not Found"
+                'status' => 401,
+                "message" => "Login to View Order Status"
             ]);
         }
     }
@@ -277,59 +308,67 @@ class OrderControlller extends Controller
     public function payment(Request $req)
     {
         if (auth()->user()) {
-            $validator = Validator::make($req->all(), [
-                'name' => 'required|max:191',
-                'phoneNum' => 'required|max:191',
-                'email' => 'required|max:191',
-                'address' => 'required|max:191',
-                'city' => 'required|max:191',
-                'state' => 'required|max:191',
-                'zip' => 'required|max:191',
-            ]);
+            if (auth()->user()->is_verified === 1) {
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 422,
-                    'validation_errors' => $validator->messages(),
+                $validator = Validator::make($req->all(), [
+                    'name' => 'required|max:191',
+                    'phoneNum' => 'required|max:191',
+                    'email' => 'required|max:191',
+                    'address' => 'required|max:191',
+                    'city' => 'required|max:191',
+                    'state' => 'required|max:191',
+                    'zip' => 'required|max:191',
                 ]);
-            } else {
-                // Set your Merchant Server Key
-                \Midtrans\Config::$serverKey = env("MIDTRANS_SERVER_KEY");
-                // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
-                \Midtrans\Config::$isProduction = false;
-                // Set sanitization on (default)
-                \Midtrans\Config::$isSanitized = true;
-                // Set 3DS transaction for credit card to true
-                \Midtrans\Config::$is3ds = true;
-                $user_id = auth()->user()->id;
-                $cart = Cart::where('user_id', $user_id)->get();
-                // $Sum = DB::table('cart')
-                //     ->join('product_color', 'cart.product_id', '=', 'product_color.id')
-                //     ->where('user_id', $user_id)
-                //     ->sum('cart.quantity');
-                foreach ($cart as $item) {
-                    // $gross = $item->product_qty * $item->product->price;
-                    $params = array(
-                        'transaction_details' => array(
-                            'order_id' => rand(),
-                            'gross_amount' => $req->get('gross_amount'),
-                        ),
-                        'customer_details' => array(
-                            'first_name' => $req->get('name'),
-                            'last_name' => "",
-                            'email' => $req->get('email'),
-                            'phone' => $req->get('phoneNum'),
-                        ),
-                    );
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'status' => 422,
+                        'validation_errors' => $validator->messages(),
+                    ]);
+                } else {
+                    // Set your Merchant Server Key
+                    \Midtrans\Config::$serverKey = env("MIDTRANS_SERVER_KEY");
+                    // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
+                    \Midtrans\Config::$isProduction = false;
+                    // Set sanitization on (default)
+                    \Midtrans\Config::$isSanitized = true;
+                    // Set 3DS transaction for credit card to true
+                    \Midtrans\Config::$is3ds = true;
+                    $user_id = auth()->user()->id;
+                    $cart = Cart::where('user_id', $user_id)->get();
+                    // $Sum = DB::table('cart')
+                    //     ->join('product_color', 'cart.product_id', '=', 'product_color.id')
+                    //     ->where('user_id', $user_id)
+                    //     ->sum('cart.quantity');
+                    foreach ($cart as $item) {
+                        // $gross = $item->product_qty * $item->product->price;
+                        $params = array(
+                            'transaction_details' => array(
+                                'order_id' => rand(),
+                                'gross_amount' => $req->get('gross_amount'),
+                            ),
+                            'customer_details' => array(
+                                'first_name' => $req->get('name'),
+                                'last_name' => "",
+                                'email' => $req->get('email'),
+                                'phone' => $req->get('phoneNum'),
+                            ),
+                        );
+                    }
+
+
+                    $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+                    return response()->json([
+                        'status' => 200,
+                        'snapToken' => $snapToken,
+                        'message' => "Order Added Successfully",
+                    ]);
                 }
-
-
-                $snapToken = \Midtrans\Snap::getSnapToken($params);
-
+            } else {
                 return response()->json([
-                    'status' => 200,
-                    'snapToken' => $snapToken,
-                    'message' => "Order Added Successfully",
+                    'status' => 403,
+                    "message" => "Please Verified Your Account First!"
                 ]);
             }
         } else {
@@ -343,37 +382,45 @@ class OrderControlller extends Controller
     public function paymentOrderCheck(Request $req, $id)
     {
         if (auth()->user()) {
-            // Set your Merchant Server Key
-            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_K');
-            // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
-            \Midtrans\Config::$isProduction = false;
-            // Set sanitization on (default)
-            \Midtrans\Config::$isSanitized = true;
-            // Set 3DS transaction for credit card to true
-            \Midtrans\Config::$is3ds = true;
-            $user_id = auth()->user()->id;
-            $order = Order::where('user_id', $user_id)->where('id', $id)->first();
-            $params = array(
-                'transaction_details' => array(
-                    'order_id' => rand(),
-                    'gross_amount' => $order->gross_amount,
-                ),
-                'customer_details' => array(
-                    'first_name' => $order->name,
-                    'last_name' => "",
-                    'email' => $order->email,
-                    'phone' => $order->phoneNum,
-                ),
-            );
+            if (auth()->user()->is_verified === 1) {
+
+                // Set your Merchant Server Key
+                \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_K');
+                // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
+                \Midtrans\Config::$isProduction = false;
+                // Set sanitization on (default)
+                \Midtrans\Config::$isSanitized = true;
+                // Set 3DS transaction for credit card to true
+                \Midtrans\Config::$is3ds = true;
+                $user_id = auth()->user()->id;
+                $order = Order::where('user_id', $user_id)->where('id', $id)->first();
+                $params = array(
+                    'transaction_details' => array(
+                        'order_id' => rand(),
+                        'gross_amount' => $order->gross_amount,
+                    ),
+                    'customer_details' => array(
+                        'first_name' => $order->name,
+                        'last_name' => "",
+                        'email' => $order->email,
+                        'phone' => $order->phoneNum,
+                    ),
+                );
 
 
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
 
-            return response()->json([
-                'status' => 200,
-                'snapToken' => $snapToken,
-                'message' => "Order Added Successfully",
-            ]);
+                return response()->json([
+                    'status' => 200,
+                    'snapToken' => $snapToken,
+                    'message' => "Order Added Successfully",
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 403,
+                    "message" => "Please Verified Your Account First!"
+                ]);
+            }
         } else {
             return response()->json([
                 'status' => 401,
