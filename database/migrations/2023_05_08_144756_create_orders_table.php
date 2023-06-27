@@ -24,8 +24,8 @@ return new class extends Migration
             $table->string("payment_mode");
             $table->string('transaction_id');
             $table->string('order_id');
-            $table->string('gross_amount');
-            $table->string('ongkir')->nullable();
+            $table->integer('gross_amount');
+            $table->integer('ongkir')->nullable();
             $table->string('cancelBy')->nullable();
             $table->string('paidBy')->nullable();
             $table->string('acceptBy')->nullable();

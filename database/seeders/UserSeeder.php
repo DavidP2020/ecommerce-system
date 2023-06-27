@@ -19,16 +19,18 @@ class UserSeeder extends Seeder
             'email' => 'Admin@admin.com',
             'password' => bcrypt('admin123'),
             'gender' => 'male',
+            'is_verified' => 1,
             'date_of_birth' => '1995-09-23',
             'address' => 'Jln.Kh Syahdan no 123',
             'role' => 'ADMIN'
         ]);
-        
+
         DB::table('users')->insert([
             'name' => 'User',
             'email' => 'user@user.com',
             'password' => bcrypt('useruser12'),
             'gender' => 'male',
+            'is_verified' => 1,
             'date_of_birth' => '1999-09-23',
             'address' => 'Jln.Kh Syahdan no 155',
             'role' => 'USER'

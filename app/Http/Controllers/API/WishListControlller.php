@@ -25,7 +25,7 @@ class WishListControlller extends Controller
                     $wishlist->delete();
                     return response()->json([
                         'status' => 200,
-                        "message" => "Wishlist Updated"
+                        "message" => "Wishlist dibatalkan"
                     ]);
                 } else {
                     $wishItem = new Wishlist;
@@ -35,7 +35,7 @@ class WishListControlller extends Controller
 
                     return response()->json([
                         'status' => 201,
-                        "message" => "Add to Wishlist"
+                        "message" => "Tambahkan ke Wishlist"
                     ]);
                 }
             } else {

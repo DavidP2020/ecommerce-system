@@ -66,7 +66,7 @@ Route::delete('wishlist/{wish_id}', [WishListControlller::class, 'deleteWish']);
 Route::post('place-order', [OrderControlller::class, 'placeOrder']);
 Route::post('place-order/{id}', [OrderControlller::class, 'paymentOrder']);
 Route::post('cancel-order/{id}', [OrderControlller::class, 'cancelOrder']);
-Route::post('validate-order', [OrderControlller::class, 'validateOrder']);
+// Route::post('validate-order', [OrderControlller::class, 'validateOrder']);
 Route::post('order-status/{id}', [OrderControlller::class, 'setPayment']);
 Route::get('admin-order/{id}', [OrderControlller::class, 'viewOrder']);
 Route::get('detail-order/{id}', [OrderControlller::class, 'viewDetailOrder']);
@@ -123,6 +123,7 @@ Route::group(['middleware' => 'api'], function () {
 
     Route::get('send-verify-mail/{email}', [AuthController::class, 'sendVerifyMail']);
     Route::get('dashboard', [OrderControlller::class, 'analystData']);
+    Route::get('dashboard-order', [OrderControlller::class, 'viewUnpaidOrder']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

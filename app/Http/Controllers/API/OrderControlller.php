@@ -48,6 +48,7 @@ class OrderControlller extends Controller
                     $order->city = $req->input('city');
                     $order->state = $req->input('state');
                     $order->zip = $req->input('zip');
+                    $order->ongkir = $req->input('ongkir');
                     $order->payment_mode = $req->input('payment_mode');
                     $order->gross_amount = $req->input('gross_amount');
 
@@ -58,7 +59,6 @@ class OrderControlller extends Controller
                     } else {
                         $order->transaction_id = $req->input('transaction_id');
                         $order->order_id = $req->input('order_id');
-                        $order->payment_code = $req->input('payment_code');
                         $order->pdf_url = $req->input('pdf_url');
                         $order->status = $req->input('status');
                     }
@@ -119,7 +119,6 @@ class OrderControlller extends Controller
                     } else {
                         $order->transaction_id = $req->input('transaction_id');
                         $order->order_id = $req->input('order_id');
-                        $order->payment_code = $req->input('payment_code');
                         $order->pdf_url = $req->input('pdf_url');
                         $order->status = $req->input('status');
                     }
@@ -188,46 +187,45 @@ class OrderControlller extends Controller
         }
     }
 
-    public function validateOrder(Request $req)
-    {
-        if (auth()->user()) {
-            if (auth()->user()->is_verified === 1) {
+    // public function validateOrder(Request $req)
+    // {
+    //     if (auth()->user()) {
+    //         if (auth()->user()->is_verified === 1) {
 
-                $validator = Validator::make($req->all(), [
-                    'name' => 'required|max:191',
-                    'phoneNum' => 'required|max:191',
-                    'email' => 'required|max:191',
-                    'address' => 'required|max:191',
-                    'city' => 'required|max:191',
-                    'state' => 'required|max:191',
-                    'zip' => 'required|max:191',
-                ]);
+    //             $validator = Validator::make($req->all(), [
+    //                 'name' => 'required|max:191',
+    //                 'phoneNum' => 'required|max:191',
+    //                 'email' => 'required|max:191',
+    //                 'address' => 'required|max:191',
+    //                 'city' => 'required|max:191',
+    //                 'state' => 'required|max:191',
+    //                 'zip' => 'required|max:191',
+    //             ]);
 
-                if ($validator->fails()) {
-                    return response()->json([
-                        'status' => 422,
-                        'validation_errors' => $validator->messages(),
-                    ]);
-                } else {
-
-                    return response()->json([
-                        'status' => 200,
-                        'message' => "Form Validated Successfully",
-                    ]);
-                }
-            } else {
-                return response()->json([
-                    'status' => 403,
-                    "message" => "Please Verified Your Account First!"
-                ]);
-            }
-        } else {
-            return response()->json([
-                'status' => 401,
-                "message" => "Login for Checkout"
-            ]);
-        }
-    }
+    //             if ($validator->fails()) {
+    //                 return response()->json([
+    //                     'status' => 422,
+    //                     'validation_errors' => $validator->messages(),
+    //                 ]);
+    //             } else {
+    //                 return response()->json([
+    //                     'status' => 200,
+    //                     'message' => "Form Validated Successfully",
+    //                 ]);
+    //             }
+    //         } else {
+    //             return response()->json([
+    //                 'status' => 403,
+    //                 "message" => "Please Verified Your Account First!"
+    //             ]);
+    //         }
+    //     } else {
+    //         return response()->json([
+    //             'status' => 401,
+    //             "message" => "Login for Checkout"
+    //         ]);
+    //     }
+    // }
 
     public function viewOrder(Request $req, $id)
     {
@@ -238,6 +236,30 @@ class OrderControlller extends Controller
                 $order = Order::all();
             } else {
                 $order = Order::where('user_id', $id)->get();
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => "Get data Order Successfull",
+                'order' => $order,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Order Status"
+            ]);
+        }
+    }
+
+    public function viewUnpaidOrder(Request $req)
+    {
+        if (auth()->user()) {
+            $admin = User::where('id', auth()->user()->id)->first();
+
+            if ($admin->role == 'ADMIN') {
+                $order = Order::where('status', '!=', 'settlement')->all();
+            } else {
+                $order = Order::where('user_id', auth()->user()->id)->where('status', '!=', 'settlement')->where('status', '!=', 'cancel')->get();
             }
 
             return response()->json([
@@ -385,7 +407,7 @@ class OrderControlller extends Controller
             if (auth()->user()->is_verified === 1) {
 
                 // Set your Merchant Server Key
-                \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_K');
+                \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
                 // Set to Development/Sandbox Environment (default). Set to true for Production Environment (accept real transaction).
                 \Midtrans\Config::$isProduction = false;
                 // Set sanitization on (default)
