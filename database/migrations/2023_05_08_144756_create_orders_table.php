@@ -29,7 +29,9 @@ return new class extends Migration
             $table->string('cancelBy')->nullable();
             $table->string('paidBy')->nullable();
             $table->string('acceptBy')->nullable();
+            $table->string('finishBy')->nullable();
             $table->string('pdf_url')->nullable();
+            $table->tinyInteger("statusOrderan")->default(0);
             $table->string("status");
             $table->timestamps();
         });

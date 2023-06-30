@@ -66,6 +66,8 @@ Route::delete('wishlist/{wish_id}', [WishListControlller::class, 'deleteWish']);
 Route::post('place-order', [OrderControlller::class, 'placeOrder']);
 Route::post('place-order/{id}', [OrderControlller::class, 'paymentOrder']);
 Route::post('cancel-order/{id}', [OrderControlller::class, 'cancelOrder']);
+Route::post('finish-order/{id}', [OrderControlller::class, 'setStatusTransaction']);
+Route::post('setStatusTransaction/{id}', [OrderControlller::class, 'cancelOrder']);
 // Route::post('validate-order', [OrderControlller::class, 'validateOrder']);
 Route::post('order-status/{id}', [OrderControlller::class, 'setPayment']);
 Route::get('admin-order/{id}', [OrderControlller::class, 'viewOrder']);
@@ -123,7 +125,13 @@ Route::group(['middleware' => 'api'], function () {
 
     Route::get('send-verify-mail/{email}', [AuthController::class, 'sendVerifyMail']);
     Route::get('dashboard', [OrderControlller::class, 'analystData']);
+    Route::get('dashboard-analyst', [OrderControlller::class, 'analystDashboard']);
+    Route::get('dashboard-analyst-cancel', [OrderControlller::class, 'analystCancelDashboard']);
+    Route::get('dashboard-analyst-done', [OrderControlller::class, 'analystDoneDashboard']);
     Route::get('dashboard-order', [OrderControlller::class, 'viewUnpaidOrder']);
+    Route::get('dashboard-process', [OrderControlller::class, 'viewProcessOrder']);
+    Route::get('dashboard-analyst-status', [OrderControlller::class, 'analystStatusDashboard']);
+    Route::get('dashboard-analyst-statusOrderan', [OrderControlller::class, 'analystStatusOrderanDashboard']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

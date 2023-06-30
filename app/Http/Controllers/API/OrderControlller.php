@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItems;
 use App\Models\Product;
 use App\Models\User;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -51,6 +52,7 @@ class OrderControlller extends Controller
                     $order->ongkir = $req->input('ongkir');
                     $order->payment_mode = $req->input('payment_mode');
                     $order->gross_amount = $req->input('gross_amount');
+                    $order->statusOrderan = $req->input('statusOrderan');
 
                     if ($req->input('payment_mode') == 'COD') {
                         $order->transaction_id = 'Ecommerce' . rand(1111, 9999);
@@ -122,6 +124,7 @@ class OrderControlller extends Controller
                         $order->pdf_url = $req->input('pdf_url');
                         $order->status = $req->input('status');
                     }
+                    $order->statusOrderan = $req->input('statusOrderan');
                     $order->update();
 
                     $ord = OrderItems::where('order_id', $id)->get();
@@ -257,9 +260,33 @@ class OrderControlller extends Controller
             $admin = User::where('id', auth()->user()->id)->first();
 
             if ($admin->role == 'ADMIN') {
-                $order = Order::where('status', '!=', 'settlement')->all();
+                $order = Order::where('status', '!=', 'settlement')->where('status', '!=', 'cancel')->get();
             } else {
                 $order = Order::where('user_id', auth()->user()->id)->where('status', '!=', 'settlement')->where('status', '!=', 'cancel')->get();
+            }
+
+            return response()->json([
+                'status' => 200,
+                'message' => "Get data Order Successfull",
+                'order' => $order,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Order Status"
+            ]);
+        }
+    }
+
+    public function viewProcessOrder(Request $req)
+    {
+        if (auth()->user()) {
+            $admin = User::where('id', auth()->user()->id)->first();
+
+            if ($admin->role == 'ADMIN') {
+                $order = Order::where('status', '=', 'settlement')->where('statusOrderan', '=', 0)->get();
+            } else {
+                $order = Order::where('user_id', auth()->user()->id)->where('status', '=', 'settlement')->where('statusOrderan', '=', 0)->get();
             }
 
             return response()->json([
@@ -307,11 +334,39 @@ class OrderControlller extends Controller
             if ($paid) {
                 $paid->status = $req->input('status');
                 $paid->acceptBy = $req->input('acceptBy');
+                $paid->statusOrderan = $req->input('statusOrderan');
                 $paid->update();
 
                 return response()->json([
                     'status' => 200,
                     'message' => "Transaction Paid",
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 404,
+                    "message" => "Transaction Not Found"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Order Status"
+            ]);
+        }
+    }
+
+    public function setStatusTransaction(Request $req, $id)
+    {
+        if (auth()->user()) {
+            $transaction = Order::find($id);
+            if ($transaction) {
+                $transaction->finishBy = $req->input('finishBy');
+                $transaction->statusOrderan = $req->input('statusOrderan');
+                $transaction->update();
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Transaction Finish",
                 ]);
             } else {
                 return response()->json([
@@ -466,9 +521,19 @@ class OrderControlller extends Controller
             $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->sum('gross_amount');
             $totalPurchaseAll = Order::where('status', '=', "settlement")->count();
 
-            $totalUnpaid = Order::where('status', '!=', "settlement")->where('user_id', auth()->user()->id)->count();
-            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('user_id', auth()->user()->id)->sum('gross_amount');
-            $totalUnpaidAll = Order::where('status', '!=', "settlement")->count();
+            $totalUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->count();
+            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->sum('gross_amount');
+            $totalUnpaidAll = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->count();
+
+            $totalCancel = Order::where('status', '=', "cancel")->where('user_id', auth()->user()->id)->count();
+            $totalCancelAll = Order::where('status', '=', "cancel")->count();
+
+            $totalProcess = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->where('user_id', auth()->user()->id)->count();
+            $totalProcesslAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->count();
+
+            $totalDone = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->where('user_id', auth()->user()->id)->count();
+            $totalDoneAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->count();
+
             return response()->json([
                 'status' => 200,
                 "totalOrder" => $totalOrder,
@@ -479,11 +544,325 @@ class OrderControlller extends Controller
                 "totalPurchaseAll" => $totalPurchaseAll,
                 "totalUnpaid" => $totalUnpaid,
                 "totalMoneyUnpaid" => $totalMoneyUnpaid,
+                "totalCancel" => $totalCancel,
+                "totalCancelAll" => $totalCancelAll,
                 "totalUnpaidAll" => $totalUnpaidAll,
+                "totalProcess" => $totalProcess,
+                "totalProcessAll" => $totalProcesslAll,
+                "totalDone" => $totalDone,
+                "totalDoneAll" => $totalDoneAll,
                 "totalProduct" => $totalProduct,
                 "totalCategory" => $totalCategory,
                 "totalUser" => $totalUser,
                 "user" => auth()->user(),
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
+            ]);
+        }
+    }
+
+    public function analystDashboard(Request $req)
+    {
+        if (auth()->user()) {
+
+            if (auth()->user()->role === "ADMIN") {
+                $entries = Order::select([
+                    DB::raw('MONTH(created_at) as month'),
+                    // DB::raw('YEAR(created_at) as month'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(*) as count'),
+                ])
+                    ->where("status", "settlement")
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'month'
+                    ])
+                    ->orderBy('month')
+                    ->get();
+            } else {
+                $entries = Order::select([
+                    DB::raw('MONTH(created_at) as month'),
+                    // DB::raw('YEAR(created_at) as month'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(*) as count'),
+                ])
+                    ->where("status", '=', "settlement")
+                    ->where("user_id", auth()->user()->id)
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'month'
+                    ])
+                    ->orderBy('month')
+                    ->get();
+            }
+
+            $labels = [
+                1 => "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec",
+            ];
+            $count = $total = [];
+
+            foreach ($entries as $entry) {
+                $total[$entry->month] = $entry->total;
+                $count[$entry->month] = $entry->count;
+            }
+
+            foreach ($labels as $month => $name) {
+                if (!array_key_exists($month, $total)) {
+                    $total[$month] = 0;
+                }
+                if (!array_key_exists($month, $count)) {
+                    $count[$month] = 0;
+                }
+            }
+            ksort($total);
+            ksort($count);
+
+            return response()->json([
+                'status' => 200,
+                "labels" => array_values($labels),
+                "dataset" => [
+                    ['total' => array_values($total)],
+                    ['count' => array_values($count)],
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
+            ]);
+        }
+    }
+
+    public function analystCancelDashboard(Request $req)
+    {
+        if (auth()->user()) {
+            if (auth()->user()->role === "ADMIN") {
+                $entries = Order::select([
+                    DB::raw('MONTH(created_at) as month'),
+                    // DB::raw('YEAR(created_at) as month'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(*) as count'),
+                ])
+                    ->where("status", '=', "Cancel")
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'month'
+                    ])
+                    ->orderBy('month')
+                    ->get();
+            } else {
+                $entries = Order::select([
+                    DB::raw('MONTH(created_at) as month'),
+                    // DB::raw('YEAR(created_at) as month'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(*) as count'),
+                ])
+                    ->where("status", '=', "Cancel")
+                    ->where("user_id", auth()->user()->id)
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'month'
+                    ])
+                    ->orderBy('month')
+                    ->get();
+            }
+
+            $labels = [
+                1 => "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec",
+            ];
+            $count = $total = [];
+
+            foreach ($entries as $entry) {
+                $total[$entry->month] = $entry->total;
+                $count[$entry->month] = $entry->count;
+            }
+
+            foreach ($labels as $month => $name) {
+                if (!array_key_exists($month, $total)) {
+                    $total[$month] = 0;
+                }
+                if (!array_key_exists($month, $count)) {
+                    $count[$month] = 0;
+                }
+            }
+            ksort($total);
+            ksort($count);
+
+            return response()->json([
+                'status' => 200,
+                "labels" => array_values($labels),
+                "dataset" => [
+                    ['total' => array_values($total)],
+                    ['count' => array_values($count)],
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
+            ]);
+        }
+    }
+
+    public function analystDoneDashboard(Request $req)
+    {
+        if (auth()->user()) {
+            if (auth()->user()->role === "ADMIN") {
+                $entries = Order::select([
+                    DB::raw('MONTH(created_at) as month'),
+                    // DB::raw('YEAR(created_at) as month'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(*) as count'),
+                ])
+                    ->where("status", '=', "settlement")
+                    ->where("statusOrderan", '=', 1)
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'month'
+                    ])
+                    ->orderBy('month')
+                    ->get();
+            } else {
+                $entries = Order::select([
+                    DB::raw('MONTH(created_at) as month'),
+                    // DB::raw('YEAR(created_at) as month'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(*) as count'),
+                ])
+                    ->where("status", "settlement")
+                    ->where("statusOrderan", 1)
+                    ->where("user_id", auth()->user()->id)
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'month'
+                    ])
+                    ->orderBy('month')
+                    ->get();
+            }
+
+            $labels = [
+                1 => "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec",
+            ];
+            $count = $total = [];
+
+            foreach ($entries as $entry) {
+                $total[$entry->month] = $entry->total;
+                $count[$entry->month] = $entry->count;
+            }
+
+            foreach ($labels as $month => $name) {
+                if (!array_key_exists($month, $total)) {
+                    $total[$month] = 0;
+                }
+                if (!array_key_exists($month, $count)) {
+                    $count[$month] = 0;
+                }
+            }
+            ksort($total);
+            ksort($count);
+
+            return response()->json([
+                'status' => 200,
+                "labels" => array_values($labels),
+                "dataset" => [
+                    ['total' => array_values($total)],
+                    ['count' => array_values($count)],
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
+            ]);
+        }
+    }
+
+    public function analystStatusDashboard(Request $req)
+    {
+        if (auth()->user()) {
+            if (auth()->user()->role === "ADMIN") {
+                $datas = Order::select([
+                    DB::raw('YEAR(created_at) as year'),
+                    DB::raw('status'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(status) as count'),
+                ])
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'status',
+                        'year'
+                    ])
+                    ->orderBy('year')
+                    ->get();
+            } else {
+                $datas = Order::select([
+                    DB::raw('YEAR(created_at) as year'),
+                    DB::raw('status'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(status) as count'),
+                ])
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->where("user_id", auth()->user()->id)
+                    ->groupBy([
+                        'status',
+                        'year'
+                    ])
+                    ->orderBy('year')
+                    ->get();
+            }
+
+            return response()->json([
+                'status' => 200,
+                "datas" => $datas,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
+            ]);
+        }
+    }
+
+    public function analystStatusOrderanDashboard(Request $req)
+    {
+        if (auth()->user()) {
+            if (auth()->user()->role === "ADMIN") {
+                $dataOrder = Order::select([
+                    DB::raw('YEAR(created_at) as year'),
+                    DB::raw('statusOrderan'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(statusOrderan) as count'),
+                ])
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->groupBy([
+                        'statusOrderan',
+                        'year'
+                    ])
+                    ->orderBy('year')
+                    ->get();
+            } else {
+                $dataOrder = Order::select([
+                    DB::raw('YEAR(created_at) as year'),
+                    DB::raw('statusOrderan'),
+                    DB::raw('SUM(gross_amount) as total'),
+                    DB::raw('COUNT(statusOrderan) as count'),
+                ])
+                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->where("user_id", auth()->user()->id)
+                    ->groupBy([
+                        'statusOrderan',
+                        'year'
+                    ])
+                    ->orderBy('year')
+                    ->get();
+            }
+
+            return response()->json([
+                'status' => 200,
+                "dataOrder" => $dataOrder,
             ]);
         } else {
             return response()->json([
