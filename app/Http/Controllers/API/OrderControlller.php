@@ -28,7 +28,6 @@ class OrderControlller extends Controller
                     'email' => 'required|max:191',
                     'address' => 'required|max:191',
                     'city' => 'required|max:191',
-                    'state' => 'required|max:191',
                     'zip' => 'required|max:191',
                 ]);
 
@@ -47,7 +46,7 @@ class OrderControlller extends Controller
                     $order->email = $req->input('email');
                     $order->address = $req->input('address');
                     $order->city = $req->input('city');
-                    $order->state = $req->input('state');
+                    // $order->state = $req->input('state');
                     $order->zip = $req->input('zip');
                     $order->ongkir = $req->input('ongkir');
                     $order->payment_mode = $req->input('payment_mode');
@@ -393,7 +392,6 @@ class OrderControlller extends Controller
                     'email' => 'required|max:191',
                     'address' => 'required|max:191',
                     'city' => 'required|max:191',
-                    'state' => 'required|max:191',
                     'zip' => 'required|max:191',
                 ]);
 
@@ -513,26 +511,26 @@ class OrderControlller extends Controller
             $totalCategory = Category::all()->count();
             $totalUser = User::where('role', 'USER')->where('status', 1)->count();
 
-            $totalOrder = Order::where('user_id', auth()->user()->id)->count();
-            $totalOrderAll = Order::all()->count();
+            $totalOrder = Order::where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalOrderAll = Order::whereYear('created_at', (new DateTime)->format('Y'))->count();
 
-            $totalPurchase = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->count();
-            $totalMoneyPurchasing = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->sum('gross_amount');
-            $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->sum('gross_amount');
-            $totalPurchaseAll = Order::where('status', '=', "settlement")->count();
+            $totalPurchase = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalMoneyPurchasing = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->sum('gross_amount');
+            $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->whereYear('created_at', (new DateTime)->format('Y'))->sum('gross_amount');
+            $totalPurchaseAll = Order::where('status', '=', "settlement")->whereYear('created_at', (new DateTime)->format('Y'))->count();
 
-            $totalUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->count();
-            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->sum('gross_amount');
-            $totalUnpaidAll = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->count();
+            $totalUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->sum('gross_amount');
+            $totalUnpaidAll = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->whereYear('created_at', (new DateTime)->format('Y'))->count();
 
-            $totalCancel = Order::where('status', '=', "cancel")->where('user_id', auth()->user()->id)->count();
-            $totalCancelAll = Order::where('status', '=', "cancel")->count();
+            $totalCancel = Order::where('status', '=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalCancelAll = Order::where('status', '=', "cancel")->whereYear('created_at', (new DateTime)->format('Y'))->count();
 
-            $totalProcess = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->where('user_id', auth()->user()->id)->count();
-            $totalProcesslAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->count();
+            $totalProcess = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalProcesslAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->whereYear('created_at', (new DateTime)->format('Y'))->count();
 
-            $totalDone = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->where('user_id', auth()->user()->id)->count();
-            $totalDoneAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->count();
+            $totalDone = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalDoneAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->whereYear('created_at', (new DateTime)->format('Y'))->count();
 
             return response()->json([
                 'status' => 200,

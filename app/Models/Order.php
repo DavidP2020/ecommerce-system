@@ -15,7 +15,6 @@ class Order extends Model
         'email',
         'address',
         'city',
-        'state',
         'zip',
         'gross_amount',
         'payment_mode',

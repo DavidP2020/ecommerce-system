@@ -17,37 +17,31 @@ class ColorSeeder extends Seeder
         DB::table('color')->insert([
             'name' => 'Black',
             'color' => '#000000',
-            'photo' => '',
             'status' => 1,
         ]);
         DB::table('color')->insert([
             'name' => 'White',
             'color' => '#FFFFFF',
-            'photo' => '',
             'status' => 1,
         ]);
         DB::table('color')->insert([
             'name' => 'Green',
             'color' => '#008000',
-            'photo' => '',
             'status' => 1,
         ]);
         DB::table('color')->insert([
             'name' => 'Red',
             'color' => '#FF0000',
-            'photo' => '',
             'status' => 1,
         ]);
         DB::table('color')->insert([
             'name' => 'Blue',
             'color' => '#0000FF',
-            'photo' => '',
             'status' => 1,
         ]);
         DB::table('color')->insert([
             'name' => 'No Color',
             'color' => '',
-            'photo' => '',
             'status' => 1,
         ]);
     }

@@ -13,11 +13,11 @@ class Color extends Model
     protected $fillable = [
         'name',
         'color',
-        'photo',
         'status'
     ];
-    
-    public function product(){
+
+    public function product()
+    {
         return $this->belongsToMany(Product::class, 'product_color')->withTimestamps();
     }
 }
