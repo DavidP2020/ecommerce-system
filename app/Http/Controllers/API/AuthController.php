@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Mail\verifMail;
+use App\Models\Order;
 use App\Models\PasswordReset;
 use App\Models\User;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -169,22 +171,30 @@ class AuthController extends Controller
             ]);
         } else {
             $user = User::find($id);
-            $user->name = $req->input('name');
-            $user->gender = $req->input('gender');
-            $user->phoneNum = $req->input('phoneNum');
-            $user->place_of_birth = $req->input('place_of_birth');
-            $user->date_of_birth = $req->input('date_of_birth');
-            $user->address = $req->input('address');
-            $user->state = $req->input('state');
-            $user->city = $req->input('city');
-            $user->zip = $req->input('zip');
-            $user->status = $req->input('status') == true ? '1' : '0';
-            $user->update();
 
-            return response()->json([
-                'status' => 200,
-                'message' => "Profile Successfull Updated",
-            ]);
+            if ($user) {
+                $user->name = $req->input('name');
+                $user->gender = $req->input('gender');
+                $user->phoneNum = $req->input('phoneNum');
+                $user->place_of_birth = $req->input('place_of_birth');
+                $user->date_of_birth = $req->input('date_of_birth');
+                $user->address = $req->input('address');
+                $user->state = $req->input('state');
+                $user->city = $req->input('city');
+                $user->zip = $req->input('zip');
+                $user->status = $req->input('status') == true ? '1' : '0';
+                $user->update();
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => "Profile Successfull Updated",
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 404,
+                    "message" => "User Not Found"
+                ]);
+            }
         }
     }
     public function setStatus(Request $req, $id)
@@ -202,7 +212,7 @@ class AuthController extends Controller
         } else {
             return response()->json([
                 'status' => 404,
-                "message" => "Product Not Found"
+                "message" => "User Not Found"
             ]);
         }
     }
@@ -253,27 +263,41 @@ class AuthController extends Controller
     }
     public function changePass(Request $req, $id)
     {
-        $user = User::find($id);
-        if ($user) {
-            if (Hash::check($req->oldPass, $user->password)) {
-                $user->password = Hash::make($req->password);
-                $user->update();
+        $validator = Validator::make($req->all(), [
+            'oldPassword' => 'required|min:8|string',
+            'password' => 'required|min:8|string|confirmed',
+        ]);
 
-                return response()->json([
-                    'status' => 200,
-                    'message' => "Change Password Successfull Updated",
-                ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 403,
+                'validation_errors' => $validator->messages(),
+            ]);
+        } else {
+            $user = User::find($id);
+            if ($user) {
+                if (Hash::check($req->oldPassword, $user->password)) {
+                    $user->password = Hash::make($req->password);
+                    $user->update();
+
+                    return response()->json([
+                        'status' => 200,
+                        'message' => "Change Password Successfull Updated",
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 402,
+                        'message' => [
+                            'errors' => "Old Password Doesn't Match"
+                        ],
+                    ]);
+                }
             } else {
                 return response()->json([
-                    'status' => 403,
-                    'message' => "Password Doesn't Match",
+                    'status' => 404,
+                    "message" => "Account Not Found"
                 ]);
             }
-        } else {
-            return response()->json([
-                'status' => 404,
-                "message" => "Account Not Found"
-            ]);
         }
     }
 
@@ -433,4 +457,16 @@ class AuthController extends Controller
 
         return view('successReset');
     }
+
+    // public function exportPDF()
+    // {
+    //     // retreive all records from db
+    //     $data = Order::all();
+    //     // share data to view
+    //     // view()->share('employee', $data);
+    //     $pdf = PDF::loadview('PDF.laporan_penjualan', ['data' => $data]);
+    //     return $pdf->download('laporan_penjualan-pdf');
+    // }
+
+
 }

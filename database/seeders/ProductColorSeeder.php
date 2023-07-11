@@ -94,5 +94,45 @@ class ProductColorSeeder extends Seeder
             'price' => 150000,
             'status' => 1,
         ]);
+        DB::table('product_color')->insert([
+            'product_id' => 5,
+            'color_id' => 2,
+            'qty' => 50,
+            'original_price' => 120000,
+            'price' => 150000,
+            'status' => 1,
+        ]);
+        DB::table('product_color')->insert([
+            'product_id' => 6,
+            'color_id' => 2,
+            'qty' => 50,
+            'original_price' => 120000,
+            'price' => 150000,
+            'status' => 1,
+        ]);
+        DB::table('product_color')->insert([
+            'product_id' => 7,
+            'color_id' => 2,
+            'qty' => 50,
+            'original_price' => 120000,
+            'price' => 150000,
+            'status' => 1,
+        ]);
+        DB::table('product_color')->insert([
+            'product_id' => 8,
+            'color_id' => 2,
+            'qty' => 50,
+            'original_price' => 120000,
+            'price' => 150000,
+            'status' => 1,
+        ]);
+        DB::table('product_color')->insert([
+            'product_id' => 9,
+            'color_id' => 2,
+            'qty' => 50,
+            'original_price' => 120000,
+            'price' => 150000,
+            'status' => 1,
+        ]);
     }
 }

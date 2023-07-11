@@ -61,6 +61,7 @@ class OrderControlller extends Controller
                         $order->transaction_id = $req->input('transaction_id');
                         $order->order_id = $req->input('order_id');
                         $order->pdf_url = $req->input('pdf_url');
+                        $order->paidBy = $req->input('paidBy');
                         $order->status = $req->input('status');
                     }
                     $order->save();
@@ -234,7 +235,7 @@ class OrderControlller extends Controller
         if (auth()->user()) {
             $admin = User::where('id', $id)->first();
 
-            if ($admin->role == 'ADMIN') {
+            if ($admin->role == 'ADMIN' || $admin->role == 'OWNER') {
                 $order = Order::all();
             } else {
                 $order = Order::where('user_id', $id)->get();
@@ -258,7 +259,7 @@ class OrderControlller extends Controller
         if (auth()->user()) {
             $admin = User::where('id', auth()->user()->id)->first();
 
-            if ($admin->role == 'ADMIN') {
+            if ($admin->role == 'ADMIN' || $admin->role == 'OWNER') {
                 $order = Order::where('status', '!=', 'settlement')->where('status', '!=', 'cancel')->get();
             } else {
                 $order = Order::where('user_id', auth()->user()->id)->where('status', '!=', 'settlement')->where('status', '!=', 'cancel')->get();
@@ -282,7 +283,7 @@ class OrderControlller extends Controller
         if (auth()->user()) {
             $admin = User::where('id', auth()->user()->id)->first();
 
-            if ($admin->role == 'ADMIN') {
+            if ($admin->role == 'ADMIN' || $admin->role == 'OWNER') {
                 $order = Order::where('status', '=', 'settlement')->where('statusOrderan', '=', 0)->get();
             } else {
                 $order = Order::where('user_id', auth()->user()->id)->where('status', '=', 'settlement')->where('statusOrderan', '=', 0)->get();
@@ -333,6 +334,7 @@ class OrderControlller extends Controller
             if ($paid) {
                 $paid->status = $req->input('status');
                 $paid->acceptBy = $req->input('acceptBy');
+                $paid->finishBy = $req->input('finishBy');
                 $paid->statusOrderan = $req->input('statusOrderan');
                 $paid->update();
 
@@ -481,8 +483,6 @@ class OrderControlller extends Controller
                         'phone' => $order->phoneNum,
                     ),
                 );
-
-
                 $snapToken = \Midtrans\Snap::getSnapToken($params);
 
                 return response()->json([
@@ -504,33 +504,33 @@ class OrderControlller extends Controller
         }
     }
 
-    public function analystData(Request $req)
+    public function analystData(Request $req, $year)
     {
         if (auth()->user()) {
             $totalProduct = Product::all()->count();
             $totalCategory = Category::all()->count();
             $totalUser = User::where('role', 'USER')->where('status', 1)->count();
 
-            $totalOrder = Order::where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
-            $totalOrderAll = Order::whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalOrder = Order::where('user_id', auth()->user()->id)->whereYear('created_at', $year)->count();
+            $totalOrderAll = Order::whereYear('created_at', $year)->count();
 
-            $totalPurchase = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
-            $totalMoneyPurchasing = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->sum('gross_amount');
-            $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->whereYear('created_at', (new DateTime)->format('Y'))->sum('gross_amount');
-            $totalPurchaseAll = Order::where('status', '=', "settlement")->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalPurchase = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->count();
+            $totalMoneyPurchasing = Order::where('status', '=', "settlement")->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->sum('gross_amount');
+            $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->whereYear('created_at', $year)->sum('gross_amount');
+            $totalPurchaseAll = Order::where('status', '=', "settlement")->whereYear('created_at', $year)->count();
 
-            $totalUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
-            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->sum('gross_amount');
-            $totalUnpaidAll = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->count();
+            $totalMoneyUnpaid = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->sum('gross_amount');
+            $totalUnpaidAll = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->whereYear('created_at', $year)->count();
 
-            $totalCancel = Order::where('status', '=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
-            $totalCancelAll = Order::where('status', '=', "cancel")->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalCancel = Order::where('status', '=', "cancel")->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->count();
+            $totalCancelAll = Order::where('status', '=', "cancel")->whereYear('created_at', $year)->count();
 
-            $totalProcess = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
-            $totalProcesslAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalProcess = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->count();
+            $totalProcesslAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->whereYear('created_at', $year)->count();
 
-            $totalDone = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->where('user_id', auth()->user()->id)->whereYear('created_at', (new DateTime)->format('Y'))->count();
-            $totalDoneAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalDone = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->where('user_id', auth()->user()->id)->whereYear('created_at', $year)->count();
+            $totalDoneAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->whereYear('created_at', $year)->count();
 
             return response()->json([
                 'status' => 200,
@@ -562,11 +562,44 @@ class OrderControlller extends Controller
         }
     }
 
-    public function analystDashboard(Request $req)
+    public function dataAdmin(Request $req, $year)
     {
         if (auth()->user()) {
+            $laporanTahunan = Order::whereYear('created_at', $year)->get();
+            $totalOrderAll = Order::whereYear('created_at', $year)->count();
+            $totalPurchaseAll = Order::where('status', '=', "settlement")->whereYear('created_at', $year)->count();
+            $totalUnpaidAll = Order::where('status', '!=', "settlement")->where('status', '!=', "cancel")->whereYear('created_at', $year)->count();
+            $totalCancelAll = Order::where('status', '=', "cancel")->whereYear('created_at', (new DateTime)->format('Y'))->count();
+            $totalProcesslAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 0)->whereYear('created_at', $year)->count();
+            $totalDoneAll = Order::where('status', '=', "settlement")->where('statusOrderan', '=', 1)->whereYear('created_at', $year)->count();
+            $totalMoneyPurchasingAll = Order::where('status', '=', "settlement")->whereYear('created_at', $year)->sum('gross_amount');
+            return response()->json([
+                'status' => 200,
+                'laporanTahunan' => $laporanTahunan,
 
-            if (auth()->user()->role === "ADMIN") {
+                "totalOrderAll" => $totalOrderAll,
+
+                "totalPurchaseAll" => $totalPurchaseAll,
+                "totalUnpaidAll" => $totalUnpaidAll,
+                "totalCancelAll" => $totalCancelAll,
+
+                "totalDoneAll" => $totalDoneAll,
+                "totalProcessAll" => $totalProcesslAll,
+
+                "totalMoneyPurchasingAll" => $totalMoneyPurchasingAll,
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                "message" => "Login to View Data Dashboard"
+            ]);
+        }
+    }
+
+    public function analystDashboard(Request $req, $year)
+    {
+        if (auth()->user()) {
+            if (auth()->user()->role === "ADMIN" || auth()->user()->role === "OWNER") {
                 $entries = Order::select([
                     DB::raw('MONTH(created_at) as month'),
                     // DB::raw('YEAR(created_at) as month'),
@@ -574,7 +607,7 @@ class OrderControlller extends Controller
                     DB::raw('COUNT(*) as count'),
                 ])
                     ->where("status", "settlement")
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'month'
                     ])
@@ -589,7 +622,7 @@ class OrderControlller extends Controller
                 ])
                     ->where("status", '=', "settlement")
                     ->where("user_id", auth()->user()->id)
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'month'
                     ])
@@ -634,10 +667,10 @@ class OrderControlller extends Controller
         }
     }
 
-    public function analystCancelDashboard(Request $req)
+    public function analystCancelDashboard(Request $req, $year)
     {
         if (auth()->user()) {
-            if (auth()->user()->role === "ADMIN") {
+            if (auth()->user()->role === "ADMIN" || auth()->user()->role === "OWNER") {
                 $entries = Order::select([
                     DB::raw('MONTH(created_at) as month'),
                     // DB::raw('YEAR(created_at) as month'),
@@ -645,7 +678,7 @@ class OrderControlller extends Controller
                     DB::raw('COUNT(*) as count'),
                 ])
                     ->where("status", '=', "Cancel")
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'month'
                     ])
@@ -660,7 +693,7 @@ class OrderControlller extends Controller
                 ])
                     ->where("status", '=', "Cancel")
                     ->where("user_id", auth()->user()->id)
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'month'
                     ])
@@ -705,10 +738,10 @@ class OrderControlller extends Controller
         }
     }
 
-    public function analystDoneDashboard(Request $req)
+    public function analystDoneDashboard(Request $req, $year)
     {
         if (auth()->user()) {
-            if (auth()->user()->role === "ADMIN") {
+            if (auth()->user()->role === "ADMIN" || auth()->user()->role === "OWNER") {
                 $entries = Order::select([
                     DB::raw('MONTH(created_at) as month'),
                     // DB::raw('YEAR(created_at) as month'),
@@ -717,7 +750,7 @@ class OrderControlller extends Controller
                 ])
                     ->where("status", '=', "settlement")
                     ->where("statusOrderan", '=', 1)
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'month'
                     ])
@@ -733,7 +766,7 @@ class OrderControlller extends Controller
                     ->where("status", "settlement")
                     ->where("statusOrderan", 1)
                     ->where("user_id", auth()->user()->id)
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'month'
                     ])
@@ -778,17 +811,17 @@ class OrderControlller extends Controller
         }
     }
 
-    public function analystStatusDashboard(Request $req)
+    public function analystStatusDashboard(Request $req, $year)
     {
         if (auth()->user()) {
-            if (auth()->user()->role === "ADMIN") {
+            if (auth()->user()->role === "ADMIN" || auth()->user()->role === "OWNER") {
                 $datas = Order::select([
                     DB::raw('YEAR(created_at) as year'),
                     DB::raw('status'),
                     DB::raw('SUM(gross_amount) as total'),
                     DB::raw('COUNT(status) as count'),
                 ])
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'status',
                         'year'
@@ -802,7 +835,7 @@ class OrderControlller extends Controller
                     DB::raw('SUM(gross_amount) as total'),
                     DB::raw('COUNT(status) as count'),
                 ])
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->where("user_id", auth()->user()->id)
                     ->groupBy([
                         'status',
@@ -824,17 +857,17 @@ class OrderControlller extends Controller
         }
     }
 
-    public function analystStatusOrderanDashboard(Request $req)
+    public function analystStatusOrderanDashboard(Request $req, $year)
     {
         if (auth()->user()) {
-            if (auth()->user()->role === "ADMIN") {
+            if (auth()->user()->role === "ADMIN" || auth()->user()->role === "OWNER") {
                 $dataOrder = Order::select([
                     DB::raw('YEAR(created_at) as year'),
                     DB::raw('statusOrderan'),
                     DB::raw('SUM(gross_amount) as total'),
                     DB::raw('COUNT(statusOrderan) as count'),
                 ])
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->groupBy([
                         'statusOrderan',
                         'year'
@@ -848,7 +881,7 @@ class OrderControlller extends Controller
                     DB::raw('SUM(gross_amount) as total'),
                     DB::raw('COUNT(statusOrderan) as count'),
                 ])
-                    ->whereYear('created_at', (new DateTime)->format('Y'))
+                    ->whereYear('created_at', $year)
                     ->where("user_id", auth()->user()->id)
                     ->groupBy([
                         'statusOrderan',

@@ -6,6 +6,7 @@ use App\Http\Controllers\API\CartControlller;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ColorController;
 use App\Http\Controllers\API\OrderControlller;
+use App\Http\Controllers\API\PDFControlller;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\WeightController;
 use App\Http\Controllers\API\WishListControlller;
@@ -45,7 +46,7 @@ Route::delete('products/{id}', [ProductController::class, 'deleteProduct']);
 Route::get('detail-products/{id}', [ProductController::class, 'getDetail']);
 Route::post('detail-products/{id}', [ProductController::class, 'addDetailProduct']);
 Route::delete('detail-products/{id}', [ProductController::class, 'deleteDetailProduct']);
-Route::post('update-detail-products/{id}', [ProductController::class, 'editDetailProduct']);
+Route::put('update-detail-products/{id}', [ProductController::class, 'editDetailProduct']);
 
 Route::get('fetchProduct/{slug}', [ProductController::class, 'fetchProduct']);
 Route::get('fetchProduct/{slug}/{product}', [ProductController::class, 'fetchDetailProduct']);
@@ -80,6 +81,9 @@ Route::post('paymentCheck/{id}', [OrderControlller::class, 'paymentOrderCheck'])
 Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
 
 Route::get('all-brand', [BrandController::class, 'getBrand']);
+Route::get('export_pdf', [PDFControlller::class, 'exportPDF']);
+
+
 
 Route::group(['middleware' => 'api'], function () {
     Route::get('checkingAuthenticated', function () {
@@ -102,36 +106,30 @@ Route::group(['middleware' => 'api'], function () {
 
     Route::get('color', [ColorController::class, 'viewColor']);
     Route::post('color', [ColorController::class, 'addColor']);
-    Route::post('color/{id}', [ColorController::class, 'updateColor']);
+    Route::put('color/{id}', [ColorController::class, 'updateColor']);
     Route::delete('color/{id}', [ColorController::class, 'deleteColor']);
     Route::get('all-color', [ColorController::class, 'getColor']);
 
-    //Weight
-
-    Route::get('weight', [WeightController::class, 'viewWeight']);
-    Route::post('weight', [WeightController::class, 'addWeight']);
-    Route::post('weight/{id}', [WeightController::class, 'updateWeight']);
-    Route::delete('weight/{id}', [WeightController::class, 'deleteWeight']);
-
     Route::get('users', [AuthController::class, 'viewUser']);
-    Route::post('user-status/{id}', [AuthController::class, 'setStatus']);
+    Route::put('user-status/{id}', [AuthController::class, 'setStatus']);
     Route::post('profile', [AuthController::class, 'profile']);
-    Route::post('profile/{id}', [AuthController::class, 'setProfile']);
+    Route::put('profile/{id}', [AuthController::class, 'setProfile']);
     Route::get('profile/{email}', [AuthController::class, 'getProfile']);
     Route::post('reset/{id}', [AuthController::class, 'reset']);
     Route::post('forgot/{email}', [AuthController::class, 'reset']);
-    Route::post('change-pass/{id}', [AuthController::class, 'changePass']);
+    Route::put('change-pass/{id}', [AuthController::class, 'changePass']);
     Route::post('logout', [AuthController::class, 'logout']);
 
     Route::get('send-verify-mail/{email}', [AuthController::class, 'sendVerifyMail']);
-    Route::get('dashboard', [OrderControlller::class, 'analystData']);
-    Route::get('dashboard-analyst', [OrderControlller::class, 'analystDashboard']);
-    Route::get('dashboard-analyst-cancel', [OrderControlller::class, 'analystCancelDashboard']);
-    Route::get('dashboard-analyst-done', [OrderControlller::class, 'analystDoneDashboard']);
+    Route::get('dashboard/{year}', [OrderControlller::class, 'analystData']);
+    Route::get('dashboard-analyst/{year}', [OrderControlller::class, 'analystDashboard']);
+    Route::get('dashboard-analyst-cancel/{year}', [OrderControlller::class, 'analystCancelDashboard']);
+    Route::get('dashboard-analyst-done/{year}', [OrderControlller::class, 'analystDoneDashboard']);
+    Route::get('dashboard-analyst-status/{year}', [OrderControlller::class, 'analystStatusDashboard']);
+    Route::get('dashboard-analyst-statusOrderan/{year}', [OrderControlller::class, 'analystStatusOrderanDashboard']);
     Route::get('dashboard-order', [OrderControlller::class, 'viewUnpaidOrder']);
     Route::get('dashboard-process', [OrderControlller::class, 'viewProcessOrder']);
-    Route::get('dashboard-analyst-status', [OrderControlller::class, 'analystStatusDashboard']);
-    Route::get('dashboard-analyst-statusOrderan', [OrderControlller::class, 'analystStatusOrderanDashboard']);
+    Route::get('laporan-tahunan/{year}', [OrderControlller::class, 'dataAdmin']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

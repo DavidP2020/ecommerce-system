@@ -347,7 +347,8 @@ class ProductController extends Controller
         $Sum = DB::table('product_color')
             ->join('products', 'product_id', '=', 'products.id')
             ->select('product_color.*', 'products.name')
-            ->where('products.trending', '1')->where('products.status', '1')
+            ->where('products.trending', '1')
+            ->where('products.status', '1')
             ->sum('product_color.qty');
 
         if ($product) {
