@@ -5,6 +5,7 @@ use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\CartControlller;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ColorController;
+use App\Http\Controllers\API\OngkirControlller;
 use App\Http\Controllers\API\OrderControlller;
 use App\Http\Controllers\API\PDFControlller;
 use App\Http\Controllers\API\ProductController;
@@ -109,6 +110,12 @@ Route::group(['middleware' => 'api'], function () {
     Route::put('color/{id}', [ColorController::class, 'updateColor']);
     Route::delete('color/{id}', [ColorController::class, 'deleteColor']);
     Route::get('all-color', [ColorController::class, 'getColor']);
+
+    Route::get('ongkir', [OngkirControlller::class, 'viewOngkir']);
+    Route::post('ongkir', [OngkirControlller::class, 'addOngkir']);
+    Route::put('ongkir/{id}', [OngkirControlller::class, 'updateOngkir']);
+    Route::delete('ongkir/{id}', [OngkirControlller::class, 'deleteOngkir']);
+    Route::get('ongkir/{id}', [OngkirControlller::class, 'getOngkirId']);
 
     Route::get('users', [AuthController::class, 'viewUser']);
     Route::put('user-status/{id}', [AuthController::class, 'setStatus']);
